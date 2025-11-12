@@ -1,0 +1,420 @@
+/* Main layout styles */
+.app-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #b33333;
+  min-height: 100vh;
+}
+
+.main-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 70px;
+}
+
+.dashboard-header h1 {
+  color: white;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-size: 28px;
+  margin: 0;
+  text-align: center;
+  margin-left: 10%;
+}
+
+.ceb-logo img {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  margin-left: 25%;
+}
+
+/* Form container styles - full width */
+.form-container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Stepper styles */
+.form-container .flex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: auto;
+  background-color: #fff;
+  padding: 0;
+  width: 100%;
+}
+
+.form-container .w-full {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+.form-container .relative {
+  position: relative;
+  background-color: #fff;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Stepper navigation */
+.form-container .flex.justify-between {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}
+
+/* Step circles */
+.form-container .w-10 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  background-color: #e0e0e0;
+  border: none;
+  margin-bottom: 8px;
+}
+
+/* Active step */
+.form-container .bg-red-400 {
+  background-color: #0098e1 !important;
+  border: none !important;
+}
+
+/* Completed step */
+.form-container .bg-emerald-400 {
+  background-color: #4CAF50 !important;
+  border: none !important;
+}
+
+/* Connecting lines */
+.form-container .h-3 {
+  height: 2px;
+  background-color: #e0e0e0;
+  width: 100%;
+}
+
+.form-container .bg-emerald-400.h-3 {
+  background-color: #4CAF50;
+}
+
+/* Step labels */
+.form-container .text-xs {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+}
+
+/* Form section title */
+.form-container h6 {
+  padding: 15px 40px;
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}
+
+/* Navigation buttons */
+.form-container .flex.space-x-4 {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-right: 40px;
+  width: 100%;
+}
+
+.form-container button {
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: auto;
+}
+
+.form-container .bg-lightBlue-500 {
+  background-color: #0098e1;
+  color: white;
+}
+
+.form-container .bg-green-500 {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Form content - full width */
+.form-container .ml-0 {
+  background-color: #f9fafb;
+  padding: 20px 40px;
+  width: 100%;
+}
+
+/* Form elements - full width */
+.form-box {
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-box-inner {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.checkbox-input {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+  accent-color: #0d6efd; 
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  width: 100%;
+  gap: 10px; 
+}
+
+.form-label {
+  min-width: 150px; 
+  margin-bottom: 0; 
+  font-weight: 500;
+  color: #4a5568;
+  text-align: left; 
+}
+
+.form-idlabel {
+  min-width: 150px; 
+  margin-bottom: 0; 
+  font-weight: 500;
+  color: #4a5568;
+  text-align: left; 
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.find-button {
+  background-color:#0098e1;
+  color: #eee;
+  padding: 2px;
+  margin-left: 10px;
+}
+
+.find-button-search{
+  background-color:#0098e1;
+  color: #eee;
+  padding: 2px;
+  margin-left: 910px;
+}
+
+.form-input, 
+.form-select {
+  flex: 1; /* Take remaining space */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0; /* Prevent flex overflow */
+}
+
+.form-input-halfhalf,
+.form-select-halfhalf {
+  flex: 0.25; /* Take remaining space */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0; /* Prevent flex overflow */
+}
+
+.form-input-email{
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0;
+  width: 100px;
+  flex: 3; 
+}
+
+.form-box-inner {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+/* Form rows - full width */
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.form-row-button {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin: 15px 0;
+  width: 100%;
+}
+.form-label.required::after {
+  content: "*";
+  color: #e53e3e;
+  margin-left: 3px;
+}
+
+.form-idlabel.required::after {
+  content: "*";
+  color: #e53e3e;
+  margin-left: 3px;
+}
+
+/* Radio groups - full width */
+.form-row .radio-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 10px; /* Match label width */
+}
+
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.radio-input {
+  margin: 0;
+  margin-right: 5px; /* Space between radio and label */
+}
+
+.radio-label {
+  margin: 0;
+  white-space: nowrap; /* Prevents label text from wrapping */
+}
+
+/* For inline labels (like "Phase:") */
+.form-box-inner > .form-label {
+  margin-right: 10px;
+}
+
+.form-box-inner .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-container .flex.justify-between {
+    padding: 10px;
+  }
+  
+  .form-box-inner {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .radio-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-container .w-10 {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .dashboard-header h1 {
+    margin-left: 0;
+  }
+  
+  .ceb-logo img {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+
+/* Disabled/readonly styles */
+.form-input:disabled,
+.form-select:disabled,
+.radio-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.form-input[readonly] {
+  background-color: #f5f5f5;
+  border-color: #e2e8f0;
+}
+
+.customer-exists-badge {
+  background-color: #38a169;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  display: inline-block;
+}
+
+.form-box-board{
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  padding: 1rem;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+/* this is for idtype ud no and fnd button part */

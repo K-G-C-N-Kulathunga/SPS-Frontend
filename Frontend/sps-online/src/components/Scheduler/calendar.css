@@ -1,0 +1,17 @@
+/* Past / disabled dates */
+.disabled-tile {
+  background-color: #F9FAFB !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+/* Selected date */
+.selected-tile {
+  background-color: #4CAF50 !important;
+  color: white !important;
+}
+
+/* Hover effect on selected date (optional) */
+.selected-tile:hover {
+  background-color: #45a049 !important;
+}

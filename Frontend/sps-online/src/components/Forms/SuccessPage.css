@@ -1,0 +1,65 @@
+/* success-container styling */
+.success-container {
+  background-color: #f0f9ff; /* Light blue background */
+  border-radius: 8px;
+  padding: 40px;
+  max-width: 600px;
+  margin: 50px auto; /* Center align */
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+}
+
+/* Heading styling - changed from h1 to h2 to match JSX */
+.success-container h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #2c3e50; /* Dark color for contrast */
+  margin-bottom: 20px;
+}
+
+/* Paragraph text */
+.success-container p {
+  font-size: 1.2rem;
+  color: #34495e;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Customer name styling - no span in current JSX but kept for future use */
+.success-container p span {
+  font-weight: 700;
+  color: #1abc9c; /* Highlight customer name */
+}
+
+/* Success icon styling */
+.success-container .icon {
+  font-size: 4rem;
+  color: #1abc9c;
+  margin-bottom: 20px;
+}
+
+/* Reference number styling */
+.success-container strong {
+  color: #3498db;
+  font-weight: 700;
+}
+
+/* Optional: Button for redirection */
+.success-container a {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-size: 1rem;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Button hover effect */
+.success-container a:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
