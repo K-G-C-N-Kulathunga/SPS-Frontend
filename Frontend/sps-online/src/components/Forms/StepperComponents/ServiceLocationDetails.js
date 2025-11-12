@@ -54,7 +54,7 @@ const ServiceLocationDetails = ({ formData, handleChange }) => {
 
   return (
     <div className="form-box">
-      {/*{error && <div className="error-message">{error}</div>}*/}
+      {error && <div className="error-message">{error}</div>}
 
       {/*<div className="form-box-inner">*/}
       {/*  <div className="form-group">*/}
@@ -279,34 +279,34 @@ const ServiceLocationDetails = ({ formData, handleChange }) => {
 
       {/* Occupy /Owner Certified */}
       <div className="form-row">
-        <label className="form-label">
-          Is Government Place:
+        <label className="form-label" htmlFor="ownership">
+          Is Government Code:
         </label>
         &nbsp;&nbsp;
         <div className="radio-group">
           <input
               type="radio"
-              id="Yes"
+              id="Occupy"
               name="ownership"
-              value="Yes"
+              value="Occupy"
               className="radio-input"
-              checked={formData?.ownership === "Yes"}
+              checked={formData.ownership === "Occupy"}
               onChange={handleChange}
           />
-          <label htmlFor="Yes" className="radio-label">
+          <label htmlFor="Occupy" className="radio-label">
             Yes
           </label>
           &nbsp;
           <input
               type="radio"
-              id="No"
+              id="Rent"
               name="ownership"
-              value="No"
+              value="Rent"
               className="radio-input"
-              checked={formData?.ownership === "No"}
+              checked={formData.ownership === "Rent"}
               onChange={handleChange}
           />
-          <label htmlFor="No" className="radio-label">
+          <label htmlFor="Rent" className="radio-label">
             No
           </label>
         </div>

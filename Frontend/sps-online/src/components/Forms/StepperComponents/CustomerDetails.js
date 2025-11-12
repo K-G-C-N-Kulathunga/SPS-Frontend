@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { api } from '../../../api'; // import our Axios instance
-import { useParams } from "react-router-dom";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 
 const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   const [customerExists, setCustomerExists] = useState(false);
   const [selectedSearchField, setSelectedSearchField] = useState("");
-  const { mode } = useParams(); // "new", "modify", or "view"
-
-  console.log("+++++++++++++++++++++++++++",mode);
 
   // Function for automatically selecting the radio of idtype
   const handleSelectIdType = (e) => {
@@ -128,67 +124,71 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
 
   return (
     <div className="dashboard-card">
-      {/* ✅ Render Searching Part ONLY for modify/view */}
-      {(mode === "modify" || mode === "view") && (
-          <div className="form-box-board">
-            <div className="form-box">
-              <div className="form-row">
-                <div className="form-box-inner">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="applicationTempId">
-                      Application Temp No:
-                    </label>
-                    <input
-                        type="text"
-                        id="applicationTempId"
-                        name="applicationTempId"
-                        className="form-input"
-                        onChange={handleChange}
-                        onFocus={() => setSelectedSearchField("applicationTempId")}
-                        onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
-                        required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="applicationNo">
-                      Application No:
-                    </label>
-                    <input
-                        type="text"
-                        id="applicationNo"
-                        name="applicationNo"
-                        className="form-input"
-                        onChange={handleChange}
-                        onFocus={() => setSelectedSearchField("applicationNo")}
-                        onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
-                        required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="onlineApllicationNo">
-                      Online Application No:
-                    </label>
-                    <input
-                        type="text"
-                        id="onlineApllicationNo"
-                        name="onlineApllicationNo"
-                        className="form-input"
-                        onChange={handleChange}
-                        onFocus={() => setSelectedSearchField("onlineApllicationNo")}
-                        onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
-                        required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <button onClick={handleSearch} className="find-button-search">
-                    Search
-                  </button>
-                </div>
+      <div className="form-box-board">
+      <div className="form-box">
+        <div className="form-row">
+            <div className="form-box-inner">
+              <div className="form-group">
+                <label className="form-label" htmlFor="suburb">
+                  Application Temp No:
+                </label>
+                <input
+                    type="text"
+                    id="applicationTempId"
+                    name="applicationTempId"
+                    className="form-input"
+                  //  value={formData.suburb}
+                    onChange={handleChange}
+                    onFocus={() => setSelectedSearchField("applicationTempId")}
+                    onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+                    // readOnly={customerExists}
+                    required
+                />
               </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="suburb">
+                  Application No:
+                </label>
+                <input
+                    type="text"
+                    id="applicationNo"
+                    name="applicationNo"
+                    className="form-input"
+                   // value={formData.suburb}
+                    onChange={handleChange}
+                    onFocus={() => setSelectedSearchField("applicationNo")}
+                    onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+                    // readOnly={customerExists}
+                    required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="suburb">
+                  Online Application No:
+                </label>
+                <input
+                    type="text"
+                    id="onlineApllicationNo"
+                    name="onlineApllicationNo"
+                    className="form-input"
+                   // value={formData.suburb}
+                    onChange={handleChange}
+                    onFocus={() => setSelectedSearchField("onlineApllicationNo")}
+                    onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+                    // readOnly={customerExists}
+                    required
+                />
+              </div>
+
             </div>
+          <div className="">
+            <button value="find" onClick={handleSearch} className="find-button-search">
+              search
+            </button>
           </div>
-      )}
+        </div>
+      </div>
+      </div>
       <br/>
       <div className="form-box-board">
       <div className="form-box">
