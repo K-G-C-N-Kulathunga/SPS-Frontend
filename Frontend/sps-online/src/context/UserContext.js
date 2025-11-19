@@ -9,20 +9,29 @@ export const UserProvider = ({ children }) => {
   const [menusLoading, setMenusLoading] = useState(false);
   const [menuTasks, setMenuTasks] = useState({});
 
-  // Fetch menus when user info changes
+  // Fetch menus when the provider mounts — read user from localStorage or sessionStorage
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.userId) {
-      setUserRole(user.userLevel);
-      setMenusLoading(true);
-      fetch(`http://localhost:9090/sps/api/login/main-menus?userId=${user.userId}`)
+    try {
+      const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const user = raw ? JSON.parse(raw) : null;
+
+      if (user && user.userId) {
+        setUserRole(user.userLevel);
+        setMenusLoading(true);
+
+        // Use the running backend to fetch menus for the stored user
+        fetch(`http://localhost:9090/sps/api/login/main-menus?userId=${user.userId}`)
           .then(res => res.json())
           .then(data => {
             setMainMenus(Array.isArray(data) ? data : []);
           })
           .catch(() => setMainMenus([]))
           .finally(() => setMenusLoading(false));
-    } else {
+      } else {
+        setMainMenus([]);
+      }
+    } catch (e) {
+      console.error('Failed to initialize user context from storage', e);
       setMainMenus([]);
     }
   }, []);
@@ -30,7 +39,13 @@ export const UserProvider = ({ children }) => {
   const logout = () => {
     setUserRole(null);
     setMainMenus([]);
-    localStorage.removeItem('user');
+    // Clear from both storages to be safe
+    try {
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
+    } catch (e) {
+      /* ignore */
+    }
   };
 
   // Fetch tasks for a menu

@@ -9,6 +9,51 @@ export default function Sidebar() {
   const history = useHistory();
     const [expandedMenu, setExpandedMenu] = useState(null);
 
+        // Resolve route for a given menu/task, allowing overrides without relying on backend codes
+        const getTaskPath = (menu, task) => {
+            const menuName = (menu.displayName || '').toLowerCase();
+            const taskName = (task.activityName || '').toLowerCase();
+
+            // If user clicks "Add" under "Service Estimate", go to Service Estimate Details page
+            if (menuName.includes('service estimate') && taskName === 'add') {
+                return '/admin/service-estimation/details';
+            }
+
+             if (menuName.includes('service estimate') && taskName === 'modify') {
+                return '/admin/service-estimation/details';
+            }
+
+            // If user clicks "Add" under Calendar (or Calendar-like menus), go to Scheduler page
+            // Accept common spellings/variants and the specific menu code 'NCD'
+            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'add') {
+                return '/admin/scheduler';
+            }
+
+
+            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'modify') {
+                return '/admin/scheduler';
+            }
+
+            if (menuName.includes('application') && taskName === 'add') {
+                return '/admin/form';
+            }
+
+            if (menuName.includes('application') && taskName === 'modify') {
+                return '/admin/form';
+            }
+
+            if (menuName.includes('new estimate') && taskName === 'add') {
+                return '/admin/NewEstimate';
+            }
+             if (menuName.includes('new estimate') && taskName === 'modify') {
+                return '/admin/NewEstimate';
+            }
+
+
+            // Default behavior: keep current pattern
+            return `/admin/${menu.menuCode}/${task.activityCode}`;
+        };
+
     // Get userId from localStorage/sessionStorage
     const user = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "{}");
     const userId = user.userId;
@@ -85,7 +130,7 @@ export default function Sidebar() {
                                               {menuTasks[menu.menuCode] && menuTasks[menu.menuCode].length > 0 ? (
                                                   menuTasks[menu.menuCode].map((task) => (
                                                       <li key={task.activityCode} className="py-1 px-2 hover:bg-blueGray-100 rounded">
-                                                          <Link to={`/admin/${menu.menuCode}/${task.activityCode}`}>
+                                                          <Link to={getTaskPath(menu, task)}>
                                                               {task.activityName}
                                                           </Link>
                                                       </li>
