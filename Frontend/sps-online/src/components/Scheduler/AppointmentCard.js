@@ -26,7 +26,7 @@ const AppointmentCard = ({ app, onCancel, onShowDetails }) => {
         }}
         onClick={() => onShowDetails(app)}
       >
-        {app.applicationId}
+        {app.appointmentId}
       </div>
 
       {showInfo && (
