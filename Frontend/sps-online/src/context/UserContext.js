@@ -1,9 +1,13 @@
+// JavaScript
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [userRole, setUserRole] = useState(null); 
+  const [userRole, setUserRole] = useState(null);
+  const [mainMenus, setMainMenus] = useState([]);
+  const [menusLoading, setMenusLoading] = useState(false);
+  const [menuTasks, setMenuTasks] = useState({});
 
   // Fetch menus when the provider mounts — read user from localStorage or sessionStorage
   useEffect(() => {
@@ -58,10 +62,13 @@ export const UserProvider = ({ children }) => {
 
 
   return (
-    <UserContext.Provider value={{ userRole, setUserRole, logout }}>
-      {children}
-    </UserContext.Provider>
+      <UserContext.Provider value={{
+        userRole, setUserRole, mainMenus, setMainMenus, menusLoading, logout,
+        menuTasks, fetchTasksForMenu
+      }}>
+        {children}
+      </UserContext.Provider>
   );
 };
 
-export const useUser  = () => useContext(UserContext);
+export const useUser = () => useContext(UserContext);
