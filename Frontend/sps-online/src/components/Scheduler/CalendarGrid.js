@@ -7,7 +7,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './calendar.css';
-import { api } from '../../api'; // your axios/api instance
+import { api } from '../../api';
 
 // Map imports
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -37,7 +37,7 @@ const CalendarGrid = () => {
   const [detailsAppointment, setDetailsAppointment] = useState(null);
 
   // ------------ Fetch appointments (with lat/lng from backend) ------------
-  const deptId = '512.00'; // change if needed
+  const deptId = '411.40'; // change if needed
   useEffect(() => {
     api
       .get(`/scheduler/appointments?deptId=${deptId}`)
@@ -109,27 +109,28 @@ const CalendarGrid = () => {
     return null;
   };
 
-  // 🔴 Just pick the FIRST appointment with coordinates (no week filter yet)
-  const firstWithCoords = useMemo(
+  // 🔹 All appointments that have valid coordinates
+  const appointmentsWithCoords = useMemo(
     () =>
       appointments
         .map((a) => ({ ...a, coords: getCoords(a) }))
-        .find((a) => a.coords),
+        .filter((a) => a.coords),
     [appointments]
   );
+
+  const detailsCoords = getCoords(detailsAppointment);
 
   // Map center priority:
   // 1) detailsAppointment with coords
   // 2) first appointment with coords
   // 3) DEFAULT_CENTER
   const mapCenter = useMemo(() => {
-    const fromDetails = getCoords(detailsAppointment);
-    if (fromDetails) return fromDetails;
-    if (firstWithCoords?.coords) return firstWithCoords.coords;
+    if (detailsCoords) return detailsCoords;
+    if (appointmentsWithCoords.length > 0) {
+      return appointmentsWithCoords[0].coords;
+    }
     return DEFAULT_CENTER;
-  }, [detailsAppointment, firstWithCoords]);
-
-  const detailsCoords = getCoords(detailsAppointment);
+  }, [detailsCoords, appointmentsWithCoords]);
 
   // ------------ Render ------------
   return (
@@ -285,8 +286,10 @@ const CalendarGrid = () => {
         </div>
 
         {/* ALWAYS-VISIBLE MAP (under calendar + weekly table, INSIDE this div) */}
-        <div className="bg-white rounded-xl shadow-md p-4 w-full lg:w-full mt-4 flex flex-col gap-3"
-        style={{ zIndex: 10, height: "700px" }}>
+        <div
+          className="bg-white rounded-xl shadow-md p-4 w-full lg:w-full mt-4 flex flex-col gap-3"
+          style={{ zIndex: 10, height: '700px' }}
+        >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-base font-semibold font-segoe text-gray-900">
               Location Map
@@ -294,8 +297,8 @@ const CalendarGrid = () => {
             <span className="text-xs text-gray-500">
               {detailsCoords
                 ? `Centered on: ${detailsAppointment.applicationId}`
-                : firstWithCoords
-                ? `Showing: ${firstWithCoords.applicationId}`
+                : appointmentsWithCoords.length > 0
+                ? `Showing ${appointmentsWithCoords.length} appointments`
                 : `Default view (Colombo)`}
             </span>
           </div>
@@ -320,43 +323,25 @@ const CalendarGrid = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {/* Marker for the selected appointment if it has coords */}
-              {detailsCoords && (
-                <Marker position={detailsCoords}>
+              {/* 🔹 Marker for ALL appointments that have coords */}
+              {appointmentsWithCoords.map((app) => (
+                <Marker key={app.appointmentId} position={app.coords}>
                   <Popup>
-                    <div style={{ fontSize: '12px' }}>
+                    <div style={{ fontSize: '15px', height: '150px', width: '300px' }}>
                       <div>
-                        <strong>{detailsAppointment.name || 'Applicant'}</strong>
+                        <strong>{app.name || 'Applicant'}</strong>
                       </div>
-                      <div>App ID: {detailsAppointment.applicationId}</div>
-                      <div>Date: {detailsAppointment.date}</div>
-                      <div>Session: {detailsAppointment.session}</div>
+                      <div>App ID: {app.appointmentId}</div>
+                      <div>Date: {app.date}</div>
+                      <div>Session: {app.session}</div>
+                      <div className='font-bold mt-1'>Mobile: {app.phone}</div>
                       <div style={{ marginTop: '4px' }}>
-                        {detailsAppointment.address || 'No address'}
+                        {app.address || 'No address'}
                       </div>
                     </div>
                   </Popup>
                 </Marker>
-              )}
-
-              {/* If no details selected, show first appointment with coords */}
-              {!detailsCoords && firstWithCoords?.coords && (
-                <Marker position={firstWithCoords.coords}>
-                  <Popup>
-                    <div style={{ fontSize: '12px' }}>
-                      <div>
-                        <strong>{firstWithCoords.name || 'Applicant'}</strong>
-                      </div>
-                      <div>App ID: {firstWithCoords.applicationId}</div>
-                      <div>Date: {firstWithCoords.date}</div>
-                      <div>Session: {firstWithCoords.session}</div>
-                      <div style={{ marginTop: '4px' }}>
-                        {firstWithCoords.address || 'No address'}
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              )}
+              ))}
             </MapContainer>
           </div>
         </div>
@@ -502,10 +487,16 @@ const CalendarGrid = () => {
 
                   api
                     .put(
-                      `/scheduler/appointments/${detailsAppointment.appointmentId}/${detailsAppointment.deptId}`,
+                      `/scheduler/appointments`,
                       {
                         status: detailsAppointment.status,
                         description: detailsAppointment.description,
+                      },
+                      {
+                        params: {
+                          appointmentId: detailsAppointment.appointmentId,
+                          deptId: detailsAppointment.deptId,
+                        },
                       }
                     )
                     .then(() => {
