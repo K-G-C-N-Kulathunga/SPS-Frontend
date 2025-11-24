@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 export default function Header() {
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  // const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // Map paths to breadcrumb names
   const breadcrumbMap = {

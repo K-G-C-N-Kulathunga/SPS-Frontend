@@ -1,6 +1,9 @@
 /* success-container styling */
+/* body {
+  background-color: #ffffff;
+} */
 .success-container {
-  background-color: #f0f9ff; /* Light blue background */
+  background-color: #fff; /* Light blue background */
   border-radius: 8px;
   padding: 40px;
   max-width: 600px;
@@ -62,4 +65,17 @@
   background-color: #2980b9;
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.form-devide-map{
+  display: 'flex';
+  flexWrap: 'wrap'; 
+  gap: '20px';
+  marginTop: '20px';
+}
+.longitude-latitude {
+  flex: 1;
+  minWidth: '200px';
+  display: 'flex';
+  flexDirection: 'column';
+  gap: '15px';
 }
