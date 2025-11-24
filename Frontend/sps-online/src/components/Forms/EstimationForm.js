@@ -91,12 +91,9 @@ const EstimationForm = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:9090/sps/api/spestlab", {
+      const response = await fetch("http://localhost:8082/api/spestlab", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic " + btoa("admin:admin123"), // 🔑 Basic Auth here
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSubmit),
       });
 
@@ -114,14 +111,8 @@ const EstimationForm = () => {
     e.preventDefault();
     if (applicationNo.trim() !== "") {
       try {
-       const response = await fetch(
-        `http://localhost:9090/sps/api/by-applicationNo?applicationNo=${applicationNo}`,
-        {
-          method: "GET",
-          headers: {
-            "Authorization": "Basic " + btoa("admin:admin123"), // 🔑 Basic Auth here too
-          },
-        }
+        const response = await fetch(
+          `http://localhost:8082/api/by-applicationNo?applicationNo=${applicationNo}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch data");

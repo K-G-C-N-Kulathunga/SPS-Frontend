@@ -1,13 +1,14 @@
 /* Main layout styles */
 .app-container {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #b33333;
+  background-color: #b33333
+;
   min-height: 100vh;
 }
 
 .main-content {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1350px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -16,7 +17,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 70px;
+  margin-bottom: 40px;
 }
 
 .dashboard-header h1 {
@@ -26,15 +27,15 @@
   font-size: 28px;
   margin: 0;
   text-align: center;
-  margin-left: 10%;
+  /* margin-left: 10%; */
 }
 
-.ceb-logo img {
+/* .ceb-logo img {
   display: flex;
   align-items: center;
   height: 60px;
   margin-left: 25%;
-}
+} */
 
 /* Form container styles - full width */
 .form-container {
@@ -64,7 +65,7 @@
 
 .form-container .relative {
   position: relative;
-  background-color: #fff;
+  /* background-color: #fff; */
   box-shadow: none;
   padding: 0;
   margin: 0;
@@ -91,7 +92,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: white;
+  color: #b33333;
   background-color: #e0e0e0;
   border: none;
   margin-bottom: 8px;
@@ -99,7 +100,7 @@
 
 /* Active step */
 .form-container .bg-red-400 {
-  background-color: #0098e1 !important;
+  background-color: #ffd900  !important;
   border: none !important;
 }
 
@@ -107,6 +108,7 @@
 .form-container .bg-emerald-400 {
   background-color: #4CAF50 !important;
   border: none !important;
+  color: white;
 }
 
 /* Connecting lines */
@@ -142,7 +144,7 @@
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-  margin-right: 40px;
+  margin-right: 400px;
   width: 100%;
 }
 
@@ -150,7 +152,7 @@
   padding: 10px 20px;
   border-radius: 4px;
   font-weight: 600;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   font-size: 14px;
   letter-spacing: 0.5px;
   border: none;
@@ -160,7 +162,7 @@
 }
 
 .form-container .bg-lightBlue-500 {
-  background-color: #0098e1;
+  background-color: #7d0000;
   color: white;
 }
 
@@ -172,7 +174,7 @@
 /* Form content - full width */
 .form-container .ml-0 {
   background-color: #f9fafb;
-  padding: 20px 40px;
+  padding: 0px 40px;
   width: 100%;
 }
 
@@ -188,7 +190,7 @@
 
 .form-box-inner {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   width: 100%;
   box-sizing: border-box;
   flex-wrap: wrap;
@@ -198,6 +200,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  font-size: x-large;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -206,7 +209,8 @@
   height: 16px;
   margin-right: 8px;
   cursor: pointer;
-  accent-color: #0d6efd; 
+  accent-color: #0d6efd;
+  font-weight: normal;
 }
 
 .form-group {
@@ -214,44 +218,55 @@
   align-items: center;
   margin-bottom: 15px;
   width: 100%;
-  gap: 10px; 
+  gap: 10px;
 }
 
 .form-label {
-  min-width: 150px; 
-  margin-bottom: 0; 
-  font-weight: 500;
+  min-width: 150px;
+  margin-bottom: 0;
+  /* font-weight: 100; */
   color: #4a5568;
-  text-align: left; 
+  text-align: left;
+  font-size:14px;
 }
 
 .form-idlabel {
-  min-width: 150px; 
-  margin-bottom: 0; 
-  font-weight: 500;
+  min-width: 150px;
+  margin-bottom: 0;
   color: #4a5568;
-  text-align: left; 
+  text-align: left;
   margin-left: 20px;
   margin-right: 20px;
 }
 
 .find-button {
-  background-color:#0098e1;
+  background-color: #7d0000;
   color: #eee;
-  padding: 2px;
-  margin-left: 10px;
+  padding: 1px 4px;
+  font-size: 12px;
+  line-height: 1;
 }
 
-.find-button-search{
-  background-color:#0098e1;
-  color: #eee;
-  padding: 2px;
-  margin-left: 910px;
-}
 
-.form-input, 
+.form-input,
 .form-select {
   flex: 1; /* Take remaining space */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0; /* Prevent flex overflow */
+}
+.form-input:focus,
+.form-select:focus {
+  border-color: #7d0000;
+  outline: none;
+}
+
+.form-input-half,
+.form-select-half {
+  flex: 0.5; /* Take remaining space */
   padding: 4px 6px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
@@ -272,14 +287,14 @@
 }
 
 .form-input-email{
-  padding: 8px 12px;
+  padding: 4px 6px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
   min-width: 0;
   width: 100px;
-  flex: 3; 
+  flex:  0.41;
 }
 
 .form-box-inner {
@@ -288,6 +303,7 @@
   width: 100%;
   flex-wrap: wrap;
 }
+
 /* Form rows - full width */
 .form-row {
   display: flex;
@@ -295,7 +311,23 @@
   margin-bottom: 15px;
   width: 100%;
   flex-wrap: wrap;
+  background-color: white;
 }
+
+/* Form rows - full width connection screen*/
+/* .form-row-connection {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+*/
 
 .form-row-button {
   display: flex;
@@ -322,23 +354,82 @@
   align-items: center;
   gap: 15px;
   margin-left: 10px; /* Match label width */
+
 }
 
+/* Phase input */
+.form-row .radio-group-phase {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 155px;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+/* Elecricity usage input */
+.form-input-half-electricity,
+.form-select-half-electricity {
+  flex: 1; /* Take remaining space */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0; /* Prevent flex overflow */
+  margin-left: 45px; /* Match label width */
+}
+
+/* connection input */
+.form-row .radio-group-connection {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 150px; /* Match label width */
+}
+
+
+/* tariff input */
+.form-row .radio-group-tariff {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 97px; /* Match label width */
+}
+
+/* Account no */
+.form-input-half-account,
+.form-select-half-account {
+  flex: 2; /* Take remaining space */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  min-width: 0; /* Prevent flex overflow */
+  margin-left: 20px;
+}
 
 .radio-option {
   display: flex;
   align-items: center;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .radio-input {
   margin: 0;
   margin-right: 5px; /* Space between radio and label */
+  color: #4a5568;
+  width: 14px;
+  height: 14px;
+
 }
 
 .radio-label {
   margin: 0;
   white-space: nowrap; /* Prevents label text from wrapping */
+  font-size: 14px;
 }
 
 /* For inline labels (like "Phase:") */
@@ -356,31 +447,38 @@
   .form-container .flex.justify-between {
     padding: 10px;
   }
-  
+
   .form-box-inner {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .radio-group {
     flex-direction: column;
     gap: 8px;
+    margin-right: 100px;
   }
-  
+
+  /* .radio-group-phase{
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 200px !important; 
+  } */
+
   .form-container .w-10 {
     width: 30px;
     height: 30px;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .dashboard-header h1 {
     margin-left: 0;
   }
-  
+
   .ceb-logo img {
     margin-left: 0;
     margin-top: 10px;
@@ -410,11 +508,20 @@
   display: inline-block;
 }
 
-.form-box-board{
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  padding: 1rem;
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
+
 /* this is for idtype ud no and fnd button part */
+
+.mr-4 {
+  margin-right: -18rem;
+}
+
+.new-application-radio-button{
+  margin-right: 1.25rem;
+}
+
+.proceed-button{
+  margin-right:-34rem;
+}
+.full-lading-page-option{
+  margin-right: 11rem;
+}
