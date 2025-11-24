@@ -8,7 +8,54 @@ export default function Sidebar() {
   const { userRole, logout } = useUser();
   const history = useHistory();
 
-  const [openDropdowns, setOpenDropdowns] = useState({});
+        // Resolve route for a given menu/task, allowing overrides without relying on backend codes
+        const getTaskPath = (menu, task) => {
+            const menuName = (menu.displayName || '').toLowerCase();
+            const taskName = (task.activityName || '').toLowerCase();
+
+            // If user clicks "Add" under "Service Estimate", go to Service Estimate Details page
+            if (menuName.includes('service estimate') && taskName === 'add') {
+                return '/admin/service-estimation/details';
+            }
+
+             if (menuName.includes('service estimate') && taskName === 'modify') {
+                return '/admin/service-estimation/details';
+            }
+
+            // If user clicks "Add" under Calendar (or Calendar-like menus), go to Scheduler page
+            // Accept common spellings/variants and the specific menu code 'NCD'
+            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'add') {
+                return '/admin/scheduler';
+            }
+
+
+            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'modify') {
+                return '/admin/scheduler';
+            }
+
+            if (menuName.includes('application') && taskName === 'add') {
+                return '/admin/form';
+            }
+
+            if (menuName.includes('application') && taskName === 'modify') {
+                return '/admin/form';
+            }
+
+            if (menuName.includes('new estimate') && taskName === 'add') {
+                return '/admin/NewEstimate';
+            }
+             if (menuName.includes('new estimate') && taskName === 'modify') {
+                return '/admin/NewEstimate';
+            }
+
+
+            // Default behavior: keep current pattern
+            return `/admin/${menu.menuCode}/${task.activityCode}`;
+        };
+
+    // Get userId from localStorage/sessionStorage
+    const user = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "{}");
+    const userId = user.userId;
 
   const toggleDropdown = (path) => {
     setOpenDropdowns((prev) => ({
@@ -193,11 +240,43 @@ export default function Sidebar() {
             </span>
           </Link>
 
-          {/* Navigation */}
-          <div className="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded">
-            <ul className="md:flex-col md:min-w-full flex flex-col list-none space-y-1">
-              {itemsToDisplay.map((item) => renderDropdown(item))}
-            </ul>
+                  {/* Navigation */}
+                  <div className="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded">
+                      <ul className="md:flex-col md:min-w-full flex flex-col list-none space-y-1">
+                          {menusLoading ? (
+                              <li className="text-blueGray-400 px-4 py-2">Loading menus...</li>
+                          ) : mainMenus && mainMenus.length > 0 ? (
+                              mainMenus.map((menu) => (
+                                  <li key={menu.menuCode} className="mb-2">
+                                      <div
+                                          className="flex items-center justify-between py-2 px-4 rounded hover:bg-blueGray-700 transition cursor-pointer"
+                                          onClick={() => handleMenuClick(menu.menuCode)}
+                                      >
+                                          <span>{menu.displayName}</span>
+                                          {expandedMenu === menu.menuCode ? <FaChevronUp /> : <FaChevronDown />}
+                                      </div>
+                                      {/* Show tasks if this menu is expanded */}
+                                      {expandedMenu === menu.menuCode && (
+                                          <ul className="ml-4 mt-1">
+                                              {menuTasks[menu.menuCode] && menuTasks[menu.menuCode].length > 0 ? (
+                                                  menuTasks[menu.menuCode].map((task) => (
+                                                      <li key={task.activityCode} className="py-1 px-2 hover:bg-blueGray-100 rounded">
+                                                          <Link to={getTaskPath(menu, task)}>
+                                                              {task.activityName}
+                                                          </Link>
+                                                      </li>
+                                                  ))
+                                              ) : (
+                                                  <li className="text-blueGray-400 px-2 py-1">No tasks</li>
+                                              )}
+                                          </ul>
+                                      )}
+                                  </li>
+                              ))
+                          ) : (
+                              <li className="text-blueGray-400 px-4 py-2">No menus available</li>
+                          )}
+                      </ul>
 
             <div className="md:flex md:flex-col md:items-stretch mt-8 pt-4 border-t border-gray-100">
               <button
