@@ -1,21 +1,19 @@
 import { useLocation } from "react-router-dom";
-import { Link } from "react-router-dom"; // For navigation button
-import './SuccessPage.css'; // Import the CSS file
+import "./SuccessPage.css";
 
 const SuccessPage = () => {
   const location = useLocation();
-  const { applicationNo, customerName } = location.state || {};
+  const stateNo = location.state?.applicationNo;
+  const stateName = location.state?.customerName;
+
+  const applicationNo = stateNo || sessionStorage.getItem("lastApplicationNo") || "—";
+  const customerName = stateName || sessionStorage.getItem("lastCustomerName") || "Customer";
 
   return (
     <div className="success-container">
-    <h2>Application Submitted Successfully!</h2>
-      <p>
-        Dear {customerName}, your application has been successfully submitted.
-      </p>
-      <p>
-        ✅ Your reference number is: <strong>{applicationNo}</strong>
-      </p>
-     {/*  <Link to="/landing">Go to Landing Page</Link> */}
+      <h2>Application Submitted Successfully!</h2>
+      <p>Dear {customerName}, your application has been successfully submitted.</p>
+      <p>Your reference number is: <strong>{applicationNo}</strong></p>
     </div>
   );
 };

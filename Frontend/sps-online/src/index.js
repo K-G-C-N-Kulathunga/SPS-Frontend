@@ -21,8 +21,6 @@ import Dashboard from "views/admin/Dashboard.js";
 
 import { UserProvider, useUser } from "./context/UserContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Sidebar from "./components/Sidebar/Sidebar";
-import {CustomerDetails} from "./components/Forms/StepperComponents/CustomerDetails.js";
 
 const App = () => {
     const { logout } = useUser();
@@ -61,7 +59,7 @@ const App = () => {
 
     return (
         <Switch>
-            {/*<Route path="/form/" component={Form}/>*/}
+            <Route path="/form/" component={Form}/>
             <Route path="/success" component={SuccessPage } />
             <Route path="/admin" component={Admin} />
             <Route path="/auth" component={Auth} />
@@ -70,29 +68,7 @@ const App = () => {
             <Route path="/" exact component={Login} />
             <ProtectedRoute path="/admin/dashboard" exact component={Dashboard} />
             <Route path="/scheduler" exact component={SchedulerPage} />
-            <Route exact path="/admin/form">
-                <Redirect to="/admin/form/new" />   {/* default redirect */}
-            </Route>
-            <Route path="/admin/form/:mode" component={CustomerDetails} />
-            {/*<Route path="/admin/form/:mode" component={CustomerDetails} />*/}
-
-
-            {/*/!* ✅ Use different paths for new/modify/view *!/*/}
-            {/*<Route*/}
-            {/*    path="/admin/form/new"*/}
-            {/*    render={(props) => <CustomerDetails {...props} mode="new" />}*/}
-            {/*/>*/}
-            {/*<Route*/}
-            {/*    path="/admin/form/modify"*/}
-            {/*    render={(props) => <CustomerDetails {...props} mode="modify" />}*/}
-            {/*/>*/}
-            {/*<Route*/}
-            {/*    path="/admin/form/view"*/}
-            {/*    render={(props) => <CustomerDetails {...props} mode="view" />}*/}
-            {/*/>*/}
-            {/*<Redirect from="*" to="/" />*/}
-
-
+            <Redirect from="*" to="/" />
         </Switch>
     );
 };
