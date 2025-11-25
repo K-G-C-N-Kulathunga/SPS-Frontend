@@ -35,7 +35,7 @@ const SchedulerPage = () => {
       </h1> */}
 
       <div className="bg-white p-6 rounded-lg h-full"
-      style={{ backgroundColor: '#F9FAFB', marginTop: '30px', borderRadius: '10px', height: '500px' }}>
+      style={{ backgroundColor: '#F9FAFB', marginTop: '30px', borderRadius: '10px', height: '1150px' }}>
         <CalendarGrid
           appointments={appointments}
           setAppointments={setAppointments}

@@ -227,7 +227,7 @@ const AppointmentForm = ({ selectedDate, onClose, onAdd, appointments }) => {
   // }, []);
 
   useEffect(() => {
-  const deptId = '423.00'; // Replace with actual deptId from login or context
+  const deptId = '411.40'; // Replace with actual deptId from login or context
   const applicationType = 'NC'; // Or let user select
 
   api.get('/scheduler/applications', {
