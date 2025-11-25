@@ -3,51 +3,25 @@ import { Link, useHistory } from "react-router-dom";
 import { FaSignOutAlt, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
 import ceb from "../../assets/img/ceb.png";
+import { resolveAdminRoute } from "routes/adminRoutes";
 
 export default function Sidebar() {
   const { mainMenus,menusLoading, logout, menuTasks, fetchTasksForMenu } = useUser();
   const history = useHistory();
     const [expandedMenu, setExpandedMenu] = useState(null);
 
-        // Resolve route for a given menu/task, allowing overrides without relying on backend codes
+        // Resolve the target route using the page column supplied by the backend task metadata.
         const getTaskPath = (menu, task) => {
-            const menuName = (menu.displayName || '').toLowerCase();
-            const taskName = (task.activityName || '').toLowerCase();
             const backendPage = (task.page || '').trim();
 
             if (backendPage) {
-                if (backendPage.startsWith('http://') || backendPage.startsWith('https://')) {
-                    return backendPage;
+                const resolved = resolveAdminRoute(backendPage);
+                if (resolved) {
+                    return resolved;
                 }
-
-                if (backendPage.startsWith('/')) {
-                    return backendPage;
-                }
-
-                const normalized = backendPage.replace(/^\/+/, '');
-                if (normalized.startsWith('admin/') || normalized.startsWith('auth/')) {
-                    return `/${normalized}`;
-                }
-
-                return `/admin/${normalized}`;
             }
 
-             
-            
-
-            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && (taskName === 'add' || taskName === 'modify')) {
-                return '/admin/scheduler';
-            }
-
-            if (menuName.includes('application') && (taskName === 'add' || taskName === 'modify')) {
-                return '/admin/form';
-            }
-
-            if (menuName.includes('new estimate') && (taskName === 'add' || taskName === 'modify')) {
-                return '/admin/NewEstimate';
-            }
-
-            return `/admin/${menu.menuCode}/${task.activityCode}`;
+            return resolveAdminRoute(`/admin/${menu.menuCode}/${task.activityCode}`) || `/admin/${menu.menuCode}/${task.activityCode}`;
         };
 
     // Get userId from localStorage/sessionStorage
