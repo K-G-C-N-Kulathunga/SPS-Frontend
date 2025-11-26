@@ -11,6 +11,7 @@ import Header from "components/Headers/Header.js"
 
 // views
 import adminRoutes from "routes/adminRoutes";
+import NewPIVPage from "views/admin/NewPIVPage.js";
 
 export default function Admin() {
   const location = useLocation();
@@ -45,7 +46,9 @@ export default function Admin() {
                 exact={route.exact !== false}
                 component={route.component}
               />
+              
             ))}
+            <Route path="/admin/newpivpage" exact component={NewPIVPage} />
             <Redirect from="/admin" to="/admin/dashboard" />
             {/*<Route path="/admin/costestimation" exact component={NewEstimatePage} />*/}
           </Switch>
