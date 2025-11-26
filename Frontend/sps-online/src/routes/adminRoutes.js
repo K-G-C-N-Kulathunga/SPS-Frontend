@@ -6,6 +6,7 @@ import Tables from "views/admin/Tables.js";
 import CostEstimation from "views/admin/CostEstimation";
 import SchedulerPage from "views/admin/SchedulerPage";
 import NewEstimatePage from "views/admin/NewEstimatePage";
+import NewPIVPage from "views/admin/NewPIVPage";
 import Form from "views/admin/FormPage.js";
 
 const normalizeKey = (value = "") =>
@@ -70,6 +71,21 @@ const adminRoutes = [
     component: NewEstimatePage,
     name: "NewEstimate",
     aliases: ["newestimatepage", "new-estimate", "estimate"],
+  },
+  {
+    path: "/admin/piv",
+    component: NewPIVPage,
+    name: "NewPIV",
+    aliases: [
+      "piv",
+      "pivgenerate",
+      "addpiv",
+      "piv-in",
+      "pivgenerate-task",
+      "newpivpage",
+      "new-piv",
+      "pivnew",
+    ],
   },
   {
     path: "/admin/form",
