@@ -29,8 +29,9 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   const handlefind = async () => {
     try {
       const response = await api.get(
-          `/applicants/findById/${formData.idNo}`//applicants/findById/${formData.idNo}
+          `/applicants/${formData.idNo}`//applicants/findById/${formData.idNo}
       );
+      console.log("Response data:", response.data);
       if (response.data) {
         setCustomerExists(true);
         setFormData((prev) => ({
@@ -367,7 +368,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   title="Mobile number must be exactly 10 digits"
                   required
                   value={formData.mobileNo}
-                  disabled={localStorage.getItem("passingTempId") !== null && localStorage.getItem("passingTempId")!=="null"}
+                  //disabled={localStorage.getItem("passingTempId") !== null && localStorage.getItem("passingTempId")!=="null"}
                   onInput={e => e.target.value = e.target.value.replace(/\D/g, '')}
                   onChange={handleChange}
               />
