@@ -31,7 +31,6 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
       const response = await api.get(
           `/applicants/${formData.idNo}`//applicants/findById/${formData.idNo}
       );
-      console.log("Response data:", response.data);
       if (response.data) {
         setCustomerExists(true);
         setFormData((prev) => ({
@@ -377,7 +376,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
 
           <div className="form-box-inner">
             <div className="form-group">
-              <label className="form-label" htmlFor="email">
+              <label className="form-label required" htmlFor="email">
                 Email:
               </label>
               <input
@@ -387,6 +386,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input-email"
                   value={formData.email}
                   onChange={handleEmailChange}
+                  required
               />
               {emailError && (
                   <div style={{ color: "red", fontSize: "12px" }}>{emailError}</div>
