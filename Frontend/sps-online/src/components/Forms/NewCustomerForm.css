@@ -525,3 +525,36 @@
 .full-lading-page-option{
   margin-right: 11rem;
 }
+
+/* Customer Category input */
+.form-input-customer-category {
+  width: 122px;   /* ✅ Fixed width */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s; /* ✅ Prevent shrinking */
+  margin-left: 154px; /* ✅ Normal spacing */
+}
+
+/* Customer Type input */
+.form-input-customer-type {
+  width: 122px;   /* ✅ Fixed width */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s; /* ✅ Prevent shrinking */
+  margin-left: 154px; /* ✅ Normal spacing */
+}
+
+/* Customer Category input */
+.form-input-customer-selection {
+  min-width: 250px;   /* ✅ Fixed width */
+  padding: 4px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s; /* ✅ Prevent shrinking */
+  margin-left: 0px; /* ✅ Normal spacing */
+}

@@ -11,6 +11,8 @@ import { ConnectionDetails } from "../Forms/StepperComponents/ConnectionDetails"
 import DocumentUpload from "./StepperComponents/DocumentUpload";
 import { api } from '../../api';
 
+const ENABLE_OTP = false;
+
 // Optional: centralize SharedService base (or keep your fixed IP if required)
 const OTP_BASE =
   process.env.REACT_APP_SHARED_SERVICE_BASE ||
@@ -830,125 +832,109 @@ const NewCustomerStepper = () => {
   // Stepper navigation
   // =========================
   const handleNext = async () => {
-    try {
-      const params = new URLSearchParams(location.search);
-      const tempIdFromUrl = params.get("tempId"); // presence => Existing Application
+  try {
+    const params = new URLSearchParams(location.search);
+    const tempIdFromUrl = params.get("tempId"); // presence => Existing Application
 
-      if (activeTab === 0) {
-        const missing = [];
-        if (!customerDetails.personalCorporate) missing.push("Select Type");
-        if (!customerDetails.idNo) missing.push("ID No");
-        if (!customerDetails.fullName) missing.push("Full Name");
-        if (!customerDetails.firstName) missing.push("First Name");
-        if (!customerDetails.lastName) missing.push("Last Name");
-        if (!customerDetails.suburb) missing.push("Street Name");
-        if (!customerDetails.mobileNo) missing.push("Mobile No");
-        if (!customerDetails.streetAddress) missing.push("Street Address");
-        if (!customerDetails.city) missing.push("City");
-        if (!customerDetails.preferredLanguage) missing.push("Preferred Language");
+    if (activeTab === 0) {
+      const missing = [];
+      if (!customerDetails.personalCorporate) missing.push("Select Type");
+      if (!customerDetails.idNo) missing.push("ID No");
+      if (!customerDetails.fullName) missing.push("Full Name");
+      if (!customerDetails.firstName) missing.push("First Name");
+      if (!customerDetails.lastName) missing.push("Last Name");
+      if (!customerDetails.suburb) missing.push("Street Name");
+      if (!customerDetails.mobileNo) missing.push("Mobile No");
+      if (!customerDetails.streetAddress) missing.push("Street Address");
+      if (!customerDetails.city) missing.push("City");
+      if (!customerDetails.email) missing.push("Email");
+      if (!customerDetails.preferredLanguage) missing.push("Preferred Language");
 
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required customer details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
+      if (missing.length > 0) {
+        alert(`Please fill all required customer details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
 
-        await postCustomerDetails();
+      await postCustomerDetails();
 
-        if (!tempIdFromUrl) {
-          const tmp = await generateTempId();
-          if (!tmp) {
-            alert("Could not generate a temporary ID. Try again.");
-            return;
-          }
-        }
-
-        // 🔐 OTP for NEW application only
-        if (!tempIdFromUrl) {
-          const sent = await sendOtp(customerDetails.mobileNo);
-          if (sent) {
-            return; // Wait until user verifies
-          }
-        }
-      } else if (activeTab === 1) {
-        const missing = [];
-        // if (!serviceLocationDetails.assessmentNo) missing.push("Assessment No");
-        if (!serviceLocationDetails.deptId) missing.push("Department");
-        if (!serviceLocationDetails.serviceStreetAddress)
-          missing.push("Service Street Address");
-        if (!serviceLocationDetails.serviceSuburb) missing.push("Service Suburb");
-        if (!serviceLocationDetails.serviceCity) missing.push("Service City");
-        if (!serviceLocationDetails.ownership) missing.push("Ownership");
-        if (!serviceLocationDetails.latitude) missing.push("Latitude");
-        if (!serviceLocationDetails.longitude) missing.push("Longitude");
-        // if (!serviceLocationDetails.neighboursAccNo)
-        //   missing.push("Neighbour's Account No");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required service location details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postServiceLocationDetails();
-      } else if (activeTab === 2) {
-        const missing = [];
-        if (!connectionDetails.phase) missing.push("Phase");
-        if (!connectionDetails.connectionType) missing.push("Connection Type");
-        if (!connectionDetails.usageElectricity)
-          missing.push("Usage of Electricity");
-        if (!connectionDetails.requestingTime) missing.push("Requesting Time");
-        if (!connectionDetails.boundaryWall) missing.push("Boundary Wall");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required connection details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postConnectionDetails();
-      } else if (activeTab === 3) {
-        const missing = [];
-        if (!contactPersonDetails.contactName) missing.push("Contact Name");
-        if (!contactPersonDetails.contactIdNo) missing.push("Contact ID No");
-        if (!contactPersonDetails.contactAddress) missing.push("Contact Address");
-        // if (!contactPersonDetails.contactTelephone)
-        //   missing.push("Contact Telephone");
-        if (!contactPersonDetails.contactMobile) missing.push("Contact Mobile");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required contact person details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postContactPersonDetails();
-      } else if (activeTab === 4) {
-        const missing = [];
-        if (!documentUpload.idCopy) missing.push("ID Copy");
-        if (!documentUpload.ownershipCertificate)
-          missing.push("Ownership Certificate");
-        if (!documentUpload.gramaNiladhariCertificate)
-          missing.push("Grama Niladhari Certificate");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required document upload fields.\nMissing: ${missing.join(", ")}`
-          );
+      if (!tempIdFromUrl) {
+        const tmp = await generateTempId();
+        if (!tmp) {
+          alert("Could not generate a temporary ID. Try again.");
           return;
         }
       }
 
-      setActiveTab((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error during post operations:", error);
-      alert("Something went wrong while submitting. Please try again.");
+      // ✅ OTP REMOVED — FLOW CONTINUES DIRECTLY
     }
-  };
+
+    else if (activeTab === 1) {
+      const missing = [];
+      if (!serviceLocationDetails.serviceStreetAddress) missing.push("Service Street Address");
+      if (!serviceLocationDetails.serviceSuburb) missing.push("Service Suburb");
+      if (!serviceLocationDetails.serviceCity) missing.push("Service City");
+      if (!serviceLocationDetails.ownership) missing.push("Ownership");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required service location details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postServiceLocationDetails();
+    }
+
+    else if (activeTab === 2) {
+      const missing = [];
+      if (!connectionDetails.phase) missing.push("Phase");
+      if (!connectionDetails.connectionType) missing.push("Connection Type");
+      if (!connectionDetails.usageElectricity) missing.push("Usage of Electricity");
+      if (!connectionDetails.requestingTime) missing.push("Requesting Time");
+      if (!connectionDetails.boundaryWall) missing.push("Boundary Wall");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required connection details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postConnectionDetails();
+    }
+
+    else if (activeTab === 3) {
+      const missing = [];
+      if (!contactPersonDetails.contactName) missing.push("Contact Name");
+      if (!contactPersonDetails.contactIdNo) missing.push("Contact ID No");
+      if (!contactPersonDetails.contactAddress) missing.push("Contact Address");
+      if (!contactPersonDetails.contactMobile) missing.push("Contact Mobile");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required contact person details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postContactPersonDetails();
+    }
+
+    else if (activeTab === 4) {
+      const missing = [];
+      if (!documentUpload.idCopy) missing.push("ID Copy");
+      if (!documentUpload.ownershipCertificate) missing.push("Ownership Certificate");
+      if (!documentUpload.gramaNiladhariCertificate) missing.push("Grama Niladhari Certificate");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required document upload fields.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+    }
+
+    // ✅ Move to next tab always
+    setActiveTab((prev) => prev + 1);
+
+  } catch (error) {
+    console.error("Error during post operations:", error);
+    alert("Something went wrong while submitting. Please try again.");
+  }
+};
+
 
   const handlePrev = () => {
     if (activeTab > 0) {

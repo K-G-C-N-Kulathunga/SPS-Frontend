@@ -224,6 +224,60 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
         </div>
       </div>
 
+      <div className="form-box-inner">
+        <div className="form-group">
+          <label className="form-label required">Customer Category:</label>
+          <select
+            id="customerCategory"
+            name="customerCategory"
+            className="form-input-customer-category"
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="RESI">Private</option>
+            <option value="HOTEL">Public</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label required">Customer Type:</label>
+          <select
+            id="customerType"
+            name="customerType"
+            className="form-input-customer-type"
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="RESI">Domestic</option>
+            <option value="HOTEL">Public</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-box-inner">
+        <div className="form-group">
+          <label className="form-label required">Tariff Category Code:</label>
+          <select
+            id="customerCategory"
+            name="customerCategory"
+            className="form-input-customer-category"
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="RESI">DP</option>
+            <option value="HOTEL">SK</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label required">Tariff Code:</label>
+          <select
+            id="customerType"
+            name="customerType"
+            className="form-input-customer-type"
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="RESI">11</option>
+            <option value="HOTEL">12</option>
+          </select>
+        </div>
+      </div>
+
       {/* previous acc no. */}
       <div className="form-box-inner">
         <div className="form-group">

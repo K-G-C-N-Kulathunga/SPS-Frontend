@@ -123,7 +123,33 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
 
   return (
       <div className="dashboard-card">
-        <div className="form-box">
+        <div className="form-box ">
+          <div className="form-box-inner ">
+            <div style={{ display: "none" }}>
+            <div className="form-group" >
+              <label className="form-label required" htmlFor="firstName">
+                tempId:
+              </label>
+              <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label required" htmlFor="lastName">
+                Application No:
+              </label>
+              <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  className="form-input"
+              />
+            </div>
+            </div>
+          </div>
           <div className="form-row">
             <div className="form-group">
               <label className="form-label required">Personal/Corporate</label>
@@ -231,7 +257,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 required
                 value={formData.fullName}
                 onChange={handleChange}
-                readOnly={customerExists}
+                readOnly={true}
             />
           </div>
           <div className="form-box-inner">
@@ -248,7 +274,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   required
                   value={formData.firstName}
                   onChange={handleChange}
-                  readOnly={customerExists}
+                  readOnly={true}
               />
             </div>
             <div className="form-group">
@@ -264,7 +290,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  readOnly={customerExists}
+                  readOnly={true}
               />
             </div>
           </div>
@@ -281,7 +307,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input"
                   value={formData.streetAddress}
                   onChange={handleChange}
-                  readOnly={customerExists}
+                  readOnly={true}
                   required
               />
             </div>
@@ -296,7 +322,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input"
                   value={formData.suburb}
                   onChange={handleChange}
-                  readOnly={customerExists}
+                  readOnly={true}
                   required
               />
             </div>
@@ -313,7 +339,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input"
                   value={formData.city}
                   onChange={handleChange}
-                  readOnly={customerExists}
+                  readOnly={true}
                   required
               />
             </div>
@@ -328,6 +354,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input"
                   value={formData.postalCode}
                   onChange={handleChange}
+                  readOnly={true}
                   // readOnly={customerExists}
               />
             </div>
@@ -350,6 +377,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   value={formData.telephoneNo}
                   onInput={e => e.target.value = e.target.value.replace(/\D/g, '')}
                   onChange={handleChange}
+                  readOnly={true}
               />
             </div>
             <div className="form-group">
@@ -370,6 +398,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   //disabled={localStorage.getItem("passingTempId") !== null && localStorage.getItem("passingTempId")!=="null"}
                   onInput={e => e.target.value = e.target.value.replace(/\D/g, '')}
                   onChange={handleChange}
+                  readOnly={true}
               />
             </div>
           </div>
@@ -383,7 +412,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   type="email"
                   id="email"
                   name="email"
-                  className="form-input-email"
+                  className="form-input"
                   value={formData.email}
                   onChange={handleEmailChange}
                   required
@@ -455,6 +484,42 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   <span>English</span>
                 </label>
               </div>
+            </div>
+            <div className="form-box-inner">
+              <div className="form-group">
+                <label className="form-label required">Application Sub Type:</label>
+                <select
+                  id="customerCategory"
+                  name="customerCategory"
+                  className="form-input-customer-selection"
+                >
+                  <option value="" disabled>Select Type</option>
+                  <option value="RESI">Private</option>
+                  <option value="HOTEL">Public</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label required">Loan Type:</label>
+                <select
+                  id="customerType"
+                  name="customerType"
+                  className="form-input-customer-selection"
+                >
+                  <option value="" disabled>Select Type</option>
+                  <option value="RESI">Domestic</option>
+                  <option value="HOTEL">Public</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group" style={{ marginTop: "15px" }}>
+              <label className="form-label">Description:</label>
+              <textarea
+                id="customerDescription"
+                name="customerDescription"
+                className="form-input"
+                placeholder="Enter description here"
+                rows={3}
+              />
             </div>
           </div>
         </div>
