@@ -13,8 +13,12 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
     const fetchSubTypes = async () => {
       try {
         const response = await api.get(
-          "/application-subtype/dropdown/NC" // backend endpoint
+          "/masterdata/applicationsubtype/NC"
         );
+        
+        // 👇 ADD THIS LINE TO SEE THE REAL DATA
+        console.log("API Data:", response.data); 
+        
         setSubTypes(response.data);
       } catch (err) {
         console.error("Error fetching application subtypes:", err);
@@ -519,8 +523,8 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                     Select Type
                   </option>
                   {subTypes.map((item) => (
-                    <option key={item.appSubType} value={item.appSubType}>
-                      {item.description}
+                    <option key={item.appSubType} value={item.appSubTypeCode}>
+                      {item.appSubTypeCode}
                     </option>
                   ))}
                 </select>
