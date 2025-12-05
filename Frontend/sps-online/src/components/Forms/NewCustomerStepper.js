@@ -87,6 +87,14 @@ const NewCustomerStepper = () => {
   }, [showOtpModal]);
 
   useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, [activeTab]);
+
+
+  useEffect(() => {
     if (!showOtpModal || otpTimer <= 0) return;
     const id = setInterval(() => setOtpTimer((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
@@ -847,7 +855,6 @@ const NewCustomerStepper = () => {
       if (!customerDetails.mobileNo) missing.push("Mobile No");
       if (!customerDetails.streetAddress) missing.push("Street Address");
       if (!customerDetails.city) missing.push("City");
-      if (!customerDetails.email) missing.push("Email");
       if (!customerDetails.preferredLanguage) missing.push("Preferred Language");
 
       if (missing.length > 0) {

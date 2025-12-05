@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { api } from '../../../api';
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -7,6 +7,21 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   const [customerExists, setCustomerExists] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [subTypes, setSubTypes] = useState([]);
+
+  useEffect(() => {
+    const fetchSubTypes = async () => {
+      try {
+        const response = await api.get(
+          "/application-subtype/dropdown/NC" // backend endpoint
+        );
+        setSubTypes(response.data);
+      } catch (err) {
+        console.error("Error fetching application subtypes:", err);
+      }
+    };
+    fetchSubTypes();
+  }, []);
 
   // Function for automatically selecting the radio of idtype
   const handleSelectIdType = (e) => {
@@ -405,7 +420,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
 
           <div className="form-box-inner">
             <div className="form-group">
-              <label className="form-label required" htmlFor="email">
+              <label className="form-label" htmlFor="email">
                 Email:
               </label>
               <input
@@ -415,7 +430,6 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   className="form-input"
                   value={formData.email}
                   onChange={handleEmailChange}
-                  required
               />
               {emailError && (
                   <div style={{ color: "red", fontSize: "12px" }}>{emailError}</div>
@@ -490,14 +504,28 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 <label className="form-label required">Application Sub Type:</label>
                 <select
                   id="customerCategory"
-                  name="customerCategory"
+                  name="appSubType"
                   className="form-input-customer-selection"
+                  value={formData.appSubType || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      appSubType: e.target.value,
+                    }))
+                  }
+                  required
                 >
-                  <option value="" disabled>Select Type</option>
-                  <option value="RESI">Private</option>
-                  <option value="HOTEL">Public</option>
+                  <option value="" disabled>
+                    Select Type
+                  </option>
+                  {subTypes.map((item) => (
+                    <option key={item.appSubType} value={item.appSubType}>
+                      {item.description}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="form-group">
                 <label className="form-label required">Loan Type:</label>
                 <select
