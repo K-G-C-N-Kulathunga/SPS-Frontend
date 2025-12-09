@@ -8,6 +8,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [subTypes, setSubTypes] = useState([]);
+  const [loanTypes, setLoanTypes] = useState([]);
 
   useEffect(() => {
     const fetchSubTypes = async () => {
@@ -25,6 +26,24 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
       }
     };
     fetchSubTypes();
+  }, []);
+
+  useEffect(() => {
+    const fetchLoanTypes = async () => {
+      try {
+        const response = await api.get(
+          "/masterdata/applicationloantype"
+        );
+        
+        // 👇 ADD THIS LINE TO SEE THE REAL DATA
+        console.log("API Data:", response.data); 
+        
+        setLoanTypes(response.data);
+      } catch (err) {
+        console.error("Error fetching application loantypes:", err);
+      }
+    };
+    fetchLoanTypes();
   }, []);
 
   // Function for automatically selecting the radio of idtype
@@ -529,17 +548,30 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   ))}
                 </select>
               </div>
-
+              
               <div className="form-group">
                 <label className="form-label required">Loan Type:</label>
                 <select
-                  id="customerType"
-                  name="customerType"
+                  id="customerCategory"
+                  name="appSubType"
                   className="form-input-customer-selection"
+                  value={formData.appSubType || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      appSubType: e.target.value,
+                    }))
+                  }
+                  required
                 >
-                  <option value="" disabled>Select Type</option>
-                  <option value="RESI">Domestic</option>
-                  <option value="HOTEL">Public</option>
+                  <option value="" disabled>
+                    Select Type
+                  </option>
+                  {loanTypes.map((item1) => (
+                    <option key={item1.appSubType} value={item1.appSubTypeCode}>
+                      {item1.loanCode}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
