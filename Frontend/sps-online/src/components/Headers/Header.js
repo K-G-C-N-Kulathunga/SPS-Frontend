@@ -8,11 +8,11 @@ export default function Header() {
 
   // Map paths to breadcrumb names
   const breadcrumbMap = {
-    "/admin/scheduler": ["Calendar", "View Calendar"],
+    "/admin/scheduler": ["Calendar", "Add Appointment"],
     "/admin/costestimation": ["Application", "Cost Estimation"],
     "/admin/form": ["Application", "New Application"],
     "/admin/service-estimation/details": ["Service Estimation", "Service Estimate Details"],
-    "/admin/NewEstimate": ["Estimation", "New", "Estimate"],
+    "/admin/NewEstimate": ["New Estimate", "Add"],
 
   };
 
