@@ -75,15 +75,24 @@ const CalendarGrid = () => {
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
   // 📅 Calendar click: only change filterDate + week start, DO NOT open Add form
+  // const handleCalendarSelect = (date) => {
+  //   const selected = new Date(date);
+  //   selected.setHours(0, 0, 0, 0);
+  //   if (selected >= today) {
+  //     setFilterDate(selected);   // filter map by this date
+  //     setStartDate(selected);    // shift weekly schedule to that day
+  //     // ❌ no formVisible here
+  //   }
+  // };
+
   const handleCalendarSelect = (date) => {
-    const selected = new Date(date);
-    selected.setHours(0, 0, 0, 0);
-    if (selected >= today) {
-      setFilterDate(selected);   // filter map by this date
-      setStartDate(selected);    // shift weekly schedule to that day
-      // ❌ no formVisible here
-    }
-  };
+  const selected = new Date(date);
+  selected.setHours(0, 0, 0, 0);
+
+  setFilterDate(selected);   // filter map by this date
+  setStartDate(selected);    // shift weekly schedule to that day
+};
+
 
   // Weekly grid click → open Add New Appointment
   const handleGridClick = ({ date, session }) => {
@@ -181,7 +190,7 @@ const CalendarGrid = () => {
           <h2 className="text-base font-semibold font-segoe text-gray-900 mb-4">
             Calendar
           </h2>
-          <Calendar
+          {/* <Calendar
             onChange={handleCalendarSelect}
             value={filterDate || today}
             tileDisabled={({ date, view }) => {
@@ -204,7 +213,27 @@ const CalendarGrid = () => {
               return null;
             }}
             minDate={today}
+          /> */}
+
+          <Calendar
+            onChange={handleCalendarSelect}
+            value={filterDate || today}
+            tileDisabled={() => false}   // allow all dates clickable
+            tileClassName={({ date, view }) => {
+              if (view === 'month') {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+
+                if (filterDate && d.getTime() === filterDate.getTime())
+                  return 'selected-tile';
+
+                // OPTIONAL: style past dates differently (but still clickable)
+                if (d < today) return 'past-tile';
+              }
+              return null;
+            }}
           />
+
         </div>
 
         {/* Weekly Table */}
