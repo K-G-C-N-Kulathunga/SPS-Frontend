@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Header from "components/Headers/Header.js";
 import { api } from "api";
+import { useLocation } from "react-router-dom";
 
 const ServiceEstimateDetails = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -39,6 +40,12 @@ const ServiceEstimateDetails = () => {
   const topRef = useRef(null);
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState("");
+  // Mode controlled by sidebar via query/state: 'ADD' | 'MODIFY'
+  const location = useLocation();
+  const stateMode = (location?.state?.serviceEstimateMode || "").toUpperCase();
+  const searchParams = new URLSearchParams(location?.search || "");
+  const queryMode = (searchParams.get("mode") || "").toUpperCase();
+  const mode = (stateMode || queryMode) === "MODIFY" ? "MODIFY" : "ADD";
   const [poleOptions, setPoleOptions] = useState([]); // State for pole data
   const [strutOptions, setStrutOptions] = useState([]); // State for strut data
   const [stayOptions, setStayOptions] = useState([]); // State for stay data
@@ -94,31 +101,30 @@ const ServiceEstimateDetails = () => {
     fetchStayData();
   }, []);
 
-  // Fetch all applications
+  // Fetch filtered applications for Add/Modify mode
   useEffect(() => {
     const fetchApplications = async () => {
       try {
         const deptId = "452.00";
         const applicationType = "NC";
         const status = "A";
+        const endpoint = mode === "ADD"
+          ? "/applications/connection-details/application-nos/unused"
+          : "/applications/connection-details/application-nos/used";
 
-        const res = await api.get(`/applications/connection-details/all`, {
-          params: {
-            deptId: deptId,
-            applicationType: applicationType,
-            status: status,
-          },
+        const res = await api.get(endpoint, {
+          params: { deptId, applicationType, status },
         });
-
-        setApplications(res.data);
-        console.log("Applications fetched successfully:", res.data);
+        setApplications(res.data || []);
+        setSelectedApplication("");
+        console.log(`Applications (${mode}) fetched:`, res.data);
       } catch (err) {
         console.error("Error fetching applications:", err);
+        setApplications([]);
       }
     };
-
     fetchApplications();
-  }, []);
+  }, [mode]);
 
   const handleFetchClick = async () => {
     if (!selectedApplication) return;
@@ -128,18 +134,14 @@ const ServiceEstimateDetails = () => {
     if (!selected) return;
 
     try {
+      // Always load connection details
       const res = await api.get("/applications/connection-details/details", {
-        params: {
-          applicationNo: selected.applicationNo,
-          deptId: selected.deptId,
-        },
+        params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
       });
       const data = res.data;
-      setFormData((prev) => ({
-        ...prev,
+      let nextForm = {
         connectionDetails: {
-          applicationNo:
-            data.applicationNo || selected.applicationNo || selectedApplication,
+          applicationNo: data.applicationNo || selected.applicationNo || selectedApplication,
           deptId: selected.deptId || "",
           applicantName: data.applicantName || "",
           applicationDate: data.applicationDate || "",
@@ -152,7 +154,57 @@ const ServiceEstimateDetails = () => {
           connectionType: data.connectionType || "",
           tariff: data.tariff || "",
         },
-      }));
+      };
+
+      // In MODIFY mode, also load previously saved estimation data
+      if (mode === "MODIFY") {
+        try {
+          const estRes = await api.get("/applications/connection-details/service-estimate/sps-arest", {
+            params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
+          });
+          const est = estRes.data || {};
+          nextForm = {
+            ...nextForm,
+            sketch1: {
+              serviceLength: "", // not mapped back
+              singleCircuitLength: "",
+              conductorType: "ABC1",
+              secondCircuitLength: String(est.secondCircuitLength ?? ""),
+              secondCircuitConductorType: "ABC1",
+              totalLineLength: est.totalLength ?? "",
+              wiringType: est.wiringType ?? "",
+              isLoopService: (est.loopCable === "Y" ? "Y" : est.loopCable === "N" ? "N" : "N"),
+              newLengthWithinPremises: "",
+              conversion1P3P: String(est.conversionLength ?? ""),
+              conversion2P3P: String(est.conversionLength2p ?? ""),
+              cableType: est.cableType ?? "",
+            },
+            sketch2: {
+              distanceToServicePoint: String(est.distanceToSp ?? ""),
+              sinNumber: est.sin ?? "",
+              isSyaNeeded: (est.isSyaNeeded === "Y" ? "Y" : est.isSyaNeeded === "N" ? "N" : "Y"),
+              businessType: est.businessType ?? "",
+              numberOfRanges: String(est.noOfSpans ?? ""),
+              isServiceConversion: "",
+              poleNumber: est.poleno ?? "",
+            },
+            sketch3: {
+              poleNumber: est.poleno ?? "",
+              distanceFromSS: String(est.distanceFromSs ?? ""),
+              substation: est.substation ?? "",
+              transformerCapacity: est.transformerCapacity ?? "",
+              transformerLoad: est.transformerLoad ?? "",
+              transformerPeakLoad: est.transformerPeakLoad ?? "",
+              feederControlType: est.feederControlType ?? "",
+              phase: est.phase ?? "",
+            },
+          };
+        } catch (e) {
+          console.warn("No existing estimate to prefill:", e?.response?.data || e.message);
+        }
+      }
+
+      setFormData((prev) => ({ ...prev, ...nextForm }));
     } catch (err) {
       console.error("Error fetching application details:", err);
     }
@@ -540,7 +592,7 @@ const ServiceEstimateDetails = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "1fr",
               gap: "15px",
               marginBottom: "15px",
             }}
@@ -559,7 +611,11 @@ const ServiceEstimateDetails = () => {
                   </option>
                 ))}
               </select>
-              <button style={buttonStyle} onClick={handleFetchClick}>
+              <button
+                style={buttonStyle}
+                onClick={handleFetchClick}
+                disabled={mode === "ADD" || !selectedApplication}
+              >
                 Find
               </button>
             </div>
@@ -1680,12 +1736,17 @@ const ServiceEstimateDetails = () => {
       // Send data to backend using configured API client
       const response = await api.post(
         "/applications/connection-details/service-estimate/save-from-frontend",
-        requestData
+        { ...requestData, mode }
       );
 
       if (response.status === 200) {
         alert("Service estimate details saved successfully to both tables!");
         console.log("Backend response:", response.data);
+        // After Add, remove the application from Add list
+        if (mode === "ADD") {
+          setApplications((prev) => prev.filter((a) => a.applicationNo !== (formData.connectionDetails.applicationNo || selectedApplication)));
+          setSelectedApplication("");
+        }
       }
     } catch (error) {
       console.error("Error saving data:", error);

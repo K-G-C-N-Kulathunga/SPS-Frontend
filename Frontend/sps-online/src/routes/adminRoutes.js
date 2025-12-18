@@ -49,6 +49,33 @@ const adminRoutes = [
     ],
   },
   {
+    path: "/admin/service-estimation/add",
+    component: ServiceEstimateDetails,
+    name: "ServiceEstimateAdd",
+    aliases: [
+      "add",
+      "service estimate add",
+      "service-estimation-add",
+      "serviceestimateadd",
+      "service-estimation/new",
+      "service-estimation/create",
+      "serviceestimatedetails-add",
+    ],
+  },
+  {
+    path: "/admin/service-estimation/modify",
+    component: ServiceEstimateDetails,
+    name: "ServiceEstimateModify",
+    aliases: [
+      "modify",
+      "service estimate modify",
+      "service-estimation-modify",
+      "serviceestimatemodify",
+      "service-estimation/update",
+      "serviceestimatedetails-modify",
+    ],
+  },
+  {
     path: "/admin/tables",
     component: Tables,
     name: "Tables",
