@@ -614,7 +614,7 @@ const ServiceEstimateDetails = () => {
               <button
                 style={buttonStyle}
                 onClick={handleFetchClick}
-                disabled={mode === "ADD" || !selectedApplication}
+                disabled={!selectedApplication}
               >
                 Find
               </button>
