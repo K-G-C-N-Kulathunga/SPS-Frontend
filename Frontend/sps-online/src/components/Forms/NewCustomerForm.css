@@ -558,3 +558,46 @@
   transition: border-color 0.2s; /* ✅ Prevent shrinking */
   margin-left: 0px; /* ✅ Normal spacing */
 }
+
+/* Wrapper: Ensures items stay in a row and don't overflow */
+.file-upload-wrapper {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  width: 100%;
+  max-width: 100%; /* Prevents the container from growing */
+}
+
+/* Button: Prevent it from getting squished */
+.file-choose-btn {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 6px 12px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 12px;
+  white-space: nowrap; /* Keep button text on one line */
+  font-weight: 500;
+  
+  /* THIS IS THE FIX: */
+  flex-shrink: 0; /* Never let the button shrink */
+}
+
+.file-choose-btn:hover {
+  background-color: #e5e7eb;
+}
+
+/* Text: Force it to truncate with (...) */
+.file-name-text {
+  font-size: 14px;
+  color: #4b5563;
+  
+  /* THIS IS THE FIX: */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adds the ... */
+  flex-grow: 1;  /* Take up remaining space */
+  min-width: 0;  /* Allow this element to shrink smaller than the text inside */
+}

@@ -6,6 +6,40 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
 
   // --- NEW: inline error messages per input ---
   const [errors, setErrors] = useState(["", "", "", ""]);
+  const [tariffCode, setTariffCode] = useState([]);
+  const [tariffCategory, setTariffCategory] = useState([]);
+
+  useEffect(() => {
+    const fetchTariffCodes = async () => {
+      try {
+        const response1 = await api.get(
+          "/masterdata/tariffcodes"
+        );
+        //Add this line to see the response data
+        console.log("Tariff Codes Response:", response1.data)
+        setTariffCode(response1.data);
+      } catch (err) {
+        console.log("Error fetching tariff:",err);
+      }
+    };
+    fetchTariffCodes();
+  }, [])
+
+  useEffect(() => {
+    const fetchTariffCategory = async () => {
+      try {
+        const response2 = await api.get(
+          "/masterdata/tariffCategory"
+        );
+        //Add this line to see the response data
+        console.log("Tariff Codes Response:", response2.data)
+        setTariffCategory(response2.data);
+      } catch (err) {
+        console.log("Error fetching tariff:",err);
+      }
+    };
+    fetchTariffCategory();
+  }, [])
 
   useEffect(() => {
     if (idNo) {
@@ -193,7 +227,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
         </div>
 
         <div className="form-group">
-          <label className="form-label required">Requesting time of usage tarif?</label>
+          <label className="form-label required">Requesting time of usage tariff?</label>
           <div className="radio-group">
             <div className="radio-option">
               <input
@@ -233,8 +267,11 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             className="form-input-customer-category"
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">Private</option>
-            <option value="HOTEL">Public</option>
+            <option value="PRIV">Private</option>
+            <option value="GOVE">Government</option>
+            <option value="SEGO">Semi_Government</option>
+            <option value="FORE">Foreign</option>
+            <option value="RELI">Religious</option>
           </select>
         </div>
         <div className="form-group">
@@ -245,8 +282,20 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             className="form-input-customer-type"
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">Domestic</option>
-            <option value="HOTEL">Public</option>
+            <option value="DOME">Domestic</option>
+            <option value="CONS">Construction</option>
+            <option value="SHOP">Shop/Office</option>
+            <option value="SCHL">School</option>
+            <option value="INDT">Industria</option>
+            <option value="HOTE">Hotel</option>
+            <option value="GARM">Garment</option>
+            <option value="FORC">Forces</option>
+            <option value="TEMP">Temple</option>
+            <option value="CHUR">Church</option>
+            <option value="MOSQ">Mosque</option>
+            <option value="FSER">Free Service</option>
+            <option value="AGRI">Agriculture</option>
+            <option value="lgov">Local Government Authority</option>
           </select>
         </div>
       </div>
@@ -258,10 +307,15 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             id="customerCategory"
             name="customerCategory"
             className="form-input-customer-category"
+            value={formData.tariffCode || ""}
+            required
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">DP</option>
-            <option value="HOTEL">SK</option>
+            {tariffCategory.map((item) => (
+              <option key={item.tariffCategory} value={item.tariffCategory}>
+                {item.tariffCatName}
+              </option>
+            ))}
           </select>
         </div>
         <div className="form-group">
@@ -272,8 +326,11 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             className="form-input-customer-type"
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">11</option>
-            <option value="HOTEL">12</option>
+            {tariffCode.map((item) => (
+              <option key={item.tariffCode} value={item.tariffCode}>
+                {item.tariffCode}
+              </option>
+            ))}
           </select>
         </div>
       </div>

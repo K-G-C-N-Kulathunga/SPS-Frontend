@@ -543,7 +543,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   </option>
                   {subTypes.map((item) => (
                     <option key={item.appSubType} value={item.appSubTypeCode}>
-                      {item.appSubTypeCode}
+                      {item.appSubTypeName}
                     </option>
                   ))}
                 </select>
@@ -555,21 +555,21 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                   id="customerCategory"
                   name="appSubType"
                   className="form-input-customer-selection"
-                  value={formData.appSubType || ""}
+                  value={formData.loanType || ""} // **FIXED: Read from 'loanType'**
                   onChange={(e) =>
                     setFormData((prev) => ({
-                      ...prev,
-                      appSubType: e.target.value,
-                    }))
+                    ...prev,
+                    loanType: e.target.value, // **FIXED: Update 'loanType'**
+                  }))
                   }
-                  required
+                 required
                 >
                   <option value="" disabled>
                     Select Type
                   </option>
                   {loanTypes.map((item1) => (
                     <option key={item1.appSubType} value={item1.appSubTypeCode}>
-                      {item1.loanCode}
+                      {item1.loanName}
                     </option>
                   ))}
                 </select>
@@ -583,6 +583,8 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 className="form-input"
                 placeholder="Enter description here"
                 rows={3}
+                value={formData.customerDescription || ""} 
+                onChange={handleChange}
               />
             </div>
           </div>
