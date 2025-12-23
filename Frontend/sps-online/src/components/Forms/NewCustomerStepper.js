@@ -82,6 +82,7 @@ const NewCustomerStepper = () => {
 
   // --- NEW STATE FOR INLINE MESSAGE ---
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showSuccessUpdateMessage, setShowSuccessUpdateMessage] = useState(false);
   const [successRefNo, setSuccessRefNo] = useState("");
 
   // CHANGED: Just hide message, DO NOT reload page
@@ -94,12 +95,25 @@ const NewCustomerStepper = () => {
     if (showSuccessMessage) {
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
-      }, 5000); // 5000 milliseconds = 5 seconds
+      }, 7500); 
 
-      // Cleanup timer if user manually closes it
       return () => clearTimeout(timer);
     }
   }, [showSuccessMessage]);
+
+  const handleSuccessUpdateClose = () => {
+    setShowSuccessUpdateMessage(false);
+  };
+
+  useEffect(() => {
+    if (showSuccessUpdateMessage) {
+      const timer = setTimeout(() => {
+        setShowSuccessUpdateMessage(false);
+      }, 7500); 
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessUpdateMessage]);
 
   useEffect(() => {
     if (showOtpModal && otpInputRef.current) {
@@ -659,7 +673,7 @@ const NewCustomerStepper = () => {
           customerCategory: connectionDetails.customerCategory, 
           tariffCatCode: connectionDetails.tariffCatCode, 
           tariffCode: connectionDetails.tariffCode,
-          customerType: serviceLocationDetails.customerType || "DOME",
+          customerType: connectionDetails.customerType || "DOME",
           longitude: serviceLocationDetails.longitude,
           latitude: serviceLocationDetails.latitude,
         },
@@ -690,15 +704,16 @@ const NewCustomerStepper = () => {
       // Check if we already have a Reference Number (Update Mode)
       if (successRefNo) {
         // === PUT REQUEST (Update) ===
-        // Note: Ensure your Backend has this PUT endpoint created!
-        appResponse = await api.put(`/newapplication/${successRefNo}`, multipart, {
-          headers: { "Content-Type": "multipart/form-data" },
+        
+        appResponse = await api.put(`/newapplication?refNo=${encodeURIComponent(successRefNo)}`, multipart, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
         
+        setShowSuccessUpdateMessage(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
         console.log("Updated successfully");
-        alert("Application details updated successfully."); 
-        // We don't need to show the success message block again for updates, 
-        // or you can just leave it as is.
+        
       } else {
         // === POST REQUEST (Create) ===
         appResponse = await api.post(`/newapplication`, multipart, {
@@ -843,7 +858,7 @@ const NewCustomerStepper = () => {
             assessmentNo: data.assessmentNo || "",
             ownership: data.ownership || "",
             deptId: data.deptId || "",
-            customerType: "DOME",
+            customerType: data.customerType ||"DOME",
             longitude: data.longitude || "",
             latitude: data.latitude || "",
           }));
@@ -1082,6 +1097,43 @@ const NewCustomerStepper = () => {
 
                         <p className="text-green-700 mt-3 font-medium">
                            You can continue to edit the details below if needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                 {showSuccessUpdateMessage && (
+                    <div className="mx-auto w-full max-w-5xl mb-4 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm relative text-center">
+                      
+                      {/* Close Button */}
+                      <button 
+                        onClick={handleSuccessUpdateClose}
+                        className="absolute top-2 right-2 text-green-700 hover:text-green-900 font-bold text-xl px-2"
+                        title="Close message"
+                      >
+                        &times;
+                      </button>
+
+                      <div className="flex flex-col items-center justify-center">
+                        {/* Green Checkmark Icon (Same attractive icon as before) */}
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-2">
+                          <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.2"/>
+                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#22c55e"/>
+                          <path d="M7 12L10.5 15.5L17 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        
+                        {/* Title */}
+                        <h3 className="text-green-800 font-bold text-xl">Application Updated Successfully!</h3>
+                        
+                        {/* Reference Number Box */}
+                        <div className="mt-2 bg-white px-6 py-2 rounded border border-green-100">
+                          <span className="text-gray-500 text-sm block">Reference Number</span>
+                          <span className="text-gray-900 font-bold text-2xl">{successRefNo}</span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-green-700 mt-3 font-medium">
+                            Your changes have been saved successfully.
                         </p>
                       </div>
                     </div>

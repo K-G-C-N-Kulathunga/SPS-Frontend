@@ -265,6 +265,9 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             id="customerCategory"
             name="customerCategory"
             className="form-input-customer-category"
+            value={formData.customerCategory || ""}
+            onChange={(e) => setFormData({ ...formData, customerCategory: e.target.value })}
+            required
           >
             <option value="" disabled>Select Type</option>
             <option value="PRIV">Private</option>
@@ -280,6 +283,8 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             id="customerType"
             name="customerType"
             className="form-input-customer-type"
+            value={formData.customerType || ""}
+            onChange={(e) => setFormData({ ...formData, customerType: e.target.value })}
           >
             <option value="" disabled>Select Type</option>
             <option value="DOME">Domestic</option>
@@ -304,15 +309,16 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
         <div className="form-group">
           <label className="form-label required">Tariff Category Code:</label>
           <select
-            id="customerCategory"
-            name="customerCategory"
+            id="tariffCatCode"
+            name="tariffCatCode"
             className="form-input-customer-category"
-            value={formData.tariffCode || ""}
+            value={formData.tariffCatCode || ""}
+            onChange={(e) => setFormData({ ...formData, tariffCatCode: e.target.value })}
             required
           >
             <option value="" disabled>Select Type</option>
             {tariffCategory.map((item) => (
-              <option key={item.tariffCategory} value={item.tariffCategory}>
+              <option key={item.tariffCatName} value={item.tariffCatCode}>
                 {item.tariffCatName}
               </option>
             ))}
@@ -321,9 +327,12 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
         <div className="form-group">
           <label className="form-label required">Tariff Code:</label>
           <select
-            id="customerType"
-            name="customerType"
+            id="tariffCode"
+            name="tariffCode"
             className="form-input-customer-type"
+            value ={formData.tariffCode || ""}
+            onChange={(e) => setFormData({ ...formData, tariffCode: e.target.value })}
+            required
           >
             <option value="" disabled>Select Type</option>
             {tariffCode.map((item) => (
