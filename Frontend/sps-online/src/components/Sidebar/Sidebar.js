@@ -115,6 +115,10 @@ export default function Sidebar() {
                                                                       to = { pathname: "/admin/service-estimation/details", search: "?mode=ADD" };
                                                                   } else if (lowerTask.includes("modify") || lowerTask.includes("edit") || lowerTask.includes("update")) {
                                                                       to = { pathname: "/admin/service-estimation/details", search: "?mode=MODIFY" };
+                                                                  } else if (lowerTask.includes("delete") || lowerTask.includes("remove")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=DELETE" };
+                                                                  } else if (lowerTask.includes("view") || lowerTask.includes("read") || lowerTask.includes("print")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=VIEW" };
                                                                   }
                                                               }
 

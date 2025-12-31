@@ -76,6 +76,19 @@ const adminRoutes = [
     ],
   },
   {
+    path: "/admin/service-estimation/view",
+    component: ServiceEstimateDetails,
+    name: "ServiceEstimateView",
+    aliases: [
+      "view",
+      "service estimate view",
+      "service-estimation-view",
+      "serviceestimateview",
+      "service-estimation/print",
+      "serviceestimatedetails-view",
+    ],
+  },
+  {
     path: "/admin/tables",
     component: Tables,
     name: "Tables",
