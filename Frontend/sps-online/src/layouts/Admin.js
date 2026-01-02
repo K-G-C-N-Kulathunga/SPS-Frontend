@@ -19,6 +19,13 @@ import CostEstimation from "views/admin/CostEstimation";
 import SchedulerPage from "views/admin/SchedulerPage";
 import NewEstimatePage from "views/admin/NewEstimatePage";
 import Form from"views/admin/FormPage.js";
+import MenuTaskManagement from "views/admin/new_for_admin.js";
+import  MenuPage  from "views/admin/Page_1_Menu.js";
+import  TaskPage  from "views/admin/Page_2_Task_Screen";
+import RoleTaskPage from "views/admin/RoleTaskPage";
+import Admindashboard_4 from "views/admin/Admindashboard_4.js";
+import Menu_new_1 from "views/admin/Page_1_Menu_new.js";
+import Departments from "views/admin/Departments";
 
 export default function Admin() {
   const location = useLocation();
@@ -55,6 +62,20 @@ export default function Admin() {
             <Route path="/admin/scheduler" exact component={SchedulerPage} />
             <Route path="/admin/NewEstimate" exact component={NewEstimatePage} />
             <Route path="/admin/form" exact component={Form} />
+
+           
+           <Route path="/admin/menu_page" exact component={MenuPage} />
+            <Route path="/admin/task_page" exact component={TaskPage} />
+            <Route path="/admin/departments" exact component={Departments} />
+            {/* <Route path="/admin/role_task_page" exact component={RoleTaskPage} /> */}
+
+            <Route path="/admin/dashboard_4" component={Admindashboard_4} />
+            <Route path="/admin/role_tasks" component={RoleTaskPage} /> {/* see below */}
+
+            <Route path="/admin/menu_new_1" component={Menu_new_1} />
+
+
+
             <Redirect from="/admin" to="/admin/dashboard" />
             {/*<Route path="/admin/costestimation" exact component={NewEstimatePage} />*/}
           </Switch>
