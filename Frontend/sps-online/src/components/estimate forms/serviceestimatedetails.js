@@ -1791,111 +1791,7 @@ const ServiceEstimateDetails = () => {
     if (activeTab > 0) setActiveTab(activeTab - 1);
     scrollToTop();
   };
-  const fetchPrintData = async (applicationNo, deptId) => {
-    const [connRes, estRes, polesRes, strutsRes, staysRes] = await Promise.all([
-      api.get("/applications/connection-details/details", { params: { applicationNo, deptId } }),
-      api.get("/applications/connection-details/service-estimate/sps-arest", { params: { applicationNo, deptId } }).catch(() => ({ data: {} })),
-      api.get("/applications/connection-details/service-estimate/sketch4/poles", { params: { applicationNo, deptId } }).catch(() => ({ data: [] })),
-      api.get("/applications/connection-details/service-estimate/sketch4/struts", { params: { applicationNo, deptId } }).catch(() => ({ data: [] })),
-      api.get("/applications/connection-details/service-estimate/sketch4/stays", { params: { applicationNo, deptId } }).catch(() => ({ data: [] })),
-    ]);
-
-    return {
-      connection: connRes?.data || {},
-      estimate: estRes?.data || {},
-      sketch4: {
-        poles: Array.isArray(polesRes?.data) ? polesRes.data : [],
-        struts: Array.isArray(strutsRes?.data) ? strutsRes.data : [],
-        stays: Array.isArray(staysRes?.data) ? staysRes.data : [],
-      },
-    };
-  };
-
-  const buildPrintHtml = (data) => {
-    const c = data.connection || {};
-    const e = data.estimate || {};
-    const p = data.sketch4?.poles || [];
-    const st = data.sketch4?.struts || [];
-    const sy = data.sketch4?.stays || [];
-
-    const safe = (v) => (v === null || v === undefined ? "" : String(v));
-
-    const rows = (items, cols) => items.map(i => `<tr>${cols.map(k => `<td>${safe(i[k])}</td>`).join("")}</tr>`).join("");
-
-    return `<!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>Service Estimate Print</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-        h1 { font-size: 18px; margin-bottom: 8px; }
-        h2 { font-size: 16px; margin: 16px 0 8px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        th, td { border: 1px solid #d1d5db; padding: 6px 8px; font-size: 12px; }
-        th { background: #f3f4f6; text-align: left; }
-        .meta { margin-bottom: 16px; }
-        .meta div { font-size: 12px; margin: 2px 0; }
-        @media print { .no-print { display: none; } }
-      </style>
-    </head>
-    <body>
-      <h1>Service Estimate Details</h1>
-      <div class="meta">
-        <div><strong>Application No:</strong> ${safe(c.applicationNo)}</div>
-        <div><strong>Department:</strong> ${safe(c.deptId)}</div>
-        <div><strong>Applicant:</strong> ${safe(c.applicantName)}</div>
-        <div><strong>Address:</strong> ${safe(c.address)}</div>
-        <div><strong>Tariff:</strong> ${safe(c.tariff)} (${safe(c.tariffCategory)})</div>
-        <div><strong>Phase:</strong> ${safe(c.phase)}</div>
-        <div><strong>Connection Type:</strong> ${safe(c.connectionType)}</div>
-      </div>
-
-      <h2>Sketch1/2/3 Summary</h2>
-      <table>
-        <tbody>
-          <tr><th>Total Line Length</th><td>${safe(e.totalLength)}</td></tr>
-          <tr><th>Wiring Type</th><td>${safe(e.wiringType)}</td></tr>
-          <tr><th>Loop Cable</th><td>${safe(e.loopCable)}</td></tr>
-          <tr><th>Inside Length</th><td>${safe(e.insideLength)}</td></tr>
-          <tr><th>Distance to Service Point</th><td>${safe(e.distanceToSp)}</td></tr>
-          <tr><th>SIN</th><td>${safe(e.sin)}</td></tr>
-          <tr><th>Business Type</th><td>${safe(e.businessType)}</td></tr>
-          <tr><th>No. of Spans</th><td>${safe(e.noOfSpans)}</td></tr>
-          <tr><th>Pole No</th><td>${safe(e.poleno)}</td></tr>
-          <tr><th>Distance From SS</th><td>${safe(e.distanceFromSs)}</td></tr>
-          <tr><th>Substation</th><td>${safe(e.substation)}</td></tr>
-          <tr><th>Transformer Capacity</th><td>${safe(e.transformerCapacity)}</td></tr>
-          <tr><th>Transformer Load</th><td>${safe(e.transformerLoad)}</td></tr>
-          <tr><th>Transformer Peak Load</th><td>${safe(e.transformerPeakLoad)}</td></tr>
-          <tr><th>Feeder Control Type</th><td>${safe(e.feederControlType)}</td></tr>
-          <tr><th>Phase</th><td>${safe(e.phase)}</td></tr>
-        </tbody>
-      </table>
-
-      <h2>Poles</h2>
-      <table>
-        <thead><tr><th>Select Pole</th><th>Pole Type</th><th>Pointer</th><th>From</th><th>To</th><th>Qty</th></tr></thead>
-        <tbody>${rows(p, ["selectPole","poleType","pointerType","connFrom","connTo","qty"])}</tbody>
-      </table>
-
-      <h2>Struts</h2>
-      <table>
-        <thead><tr><th>Type</th><th>Qty</th></tr></thead>
-        <tbody>${rows(st, ["type","qty"])}</tbody>
-      </table>
-
-      <h2>Stays</h2>
-      <table>
-        <thead><tr><th>Type</th><th>Stay Type</th><th>Qty</th></tr></thead>
-        <tbody>${rows(sy, ["type","stayType","qty"])}</tbody>
-      </table>
-
-      <button class="no-print" onclick="window.print()">Print</button>
-    </body>
-    </html>`;
-  };
-
+  // Professional print using Jasper PDF streamed from backend, no new tab
   const handlePrint = async () => {
     try {
       const applicationNo = (formData.connectionDetails.applicationNo || selectedApplication || "").toString().trim();
@@ -1904,18 +1800,46 @@ const ServiceEstimateDetails = () => {
         alert("Please select an application number before printing.");
         return;
       }
-      const data = await fetchPrintData(applicationNo, deptId);
-      const html = buildPrintHtml(data);
-      const w = window.open("", "_blank");
-      if (!w) {
-        alert("Popup blocked. Please allow popups to print.");
-        return;
-      }
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
-      setTimeout(() => { try { w.print(); } catch(e){} }, 300);
+
+      const resp = await api.get("/applications/connection-details/service-estimate/print", {
+        params: { applicationNo, deptId },
+        responseType: "blob",
+      });
+
+      const pdfBlob = new Blob([resp.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+
+      const cleanup = () => {
+        try { document.body.removeChild(iframe); } catch (e) {}
+        URL.revokeObjectURL(url);
+      };
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } finally {
+          setTimeout(cleanup, 1500);
+        }
+      };
+
+      // Fallback: if onload doesn't fire (rare), trigger print after a delay
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {}
+      }, 2000);
     } catch (err) {
       console.error("Print failed:", err);
       alert(`Print failed: ${err.response?.data?.message || err.message}`);
