@@ -181,17 +181,22 @@ const TaskPage = () => {
     };
 
     try {
-      // ✅ If your backend supports create:
-      // await api.post("/tasks", payload);
+      setLoadingTasks(true);
 
-      // Optimistic UI (keep your existing fetch behavior untouched)
-      setSelectedTasks((prev) => [...prev, payload]);
+      // send to backend
+      await api.post("/tasks", payload);
+
+      // reload authoritative list from server for the selected menu
+      const refreshed = await fetchTasksByMenuCode(menuCode);
+      setSelectedTasks(refreshed || []);
 
       setTaskForm({ ...emptyTask, menuCode });
-      setTaskMessage(`Draft task ${activityCode} added.`);
+      setTaskMessage(`Task ${activityCode} created.`);
       setIsCreateOpen(false);
     } catch (err) {
       setTaskMessage(err?.response?.data?.message || err.message || "Failed to create task");
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -252,26 +257,21 @@ const TaskPage = () => {
     };
 
     try {
-      // ✅ If your backend supports update (example):
-      // await api.put(`/tasks/${encodeURIComponent(editForm._originalActivityCode)}`, payload);
+      setLoadingTasks(true);
 
-      setSelectedTasks((prev) =>
-        prev.map((t) => {
-          const key = t.activityCode || t.activityName;
-          if (key !== editForm._originalActivityCode && t.activityCode !== editForm._originalActivityCode)
-            return t;
+      // send update to backend
+      await api.put(`/tasks/${encodeURIComponent(editForm._originalActivityCode)}`, payload);
 
-          // safer match by originalActivityCode if present
-          if ((t.activityCode || "") !== (editForm._originalActivityCode || "")) return t;
-
-          return { ...t, ...payload };
-        })
-      );
+      // reload authoritative list from server for the selected menu
+      const refreshed = await fetchTasksByMenuCode(menuCode);
+      setSelectedTasks(refreshed || []);
 
       setIsEditOpen(false);
-      setEditMessage("");
+      setEditMessage(`Task ${activityCode} updated.`);
     } catch (err) {
       setEditMessage(err?.response?.data?.message || err.message || "Failed to update task");
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -287,14 +287,18 @@ const TaskPage = () => {
     if (!ok) return;
 
     try {
-      // ✅ If your backend supports delete (example):
-      // await api.delete(`/tasks/${encodeURIComponent(code)}`);
+      setLoadingTasks(true);
 
-      setSelectedTasks((prev) =>
-        prev.filter((t) => (t.activityCode || t.activityName) !== (task.activityCode || task.activityName))
-      );
+      // send delete to backend
+      await api.delete(`/tasks/${encodeURIComponent(code)}`);
+
+      // reload authoritative list from server for the selected menu
+      const refreshed = selectedMenuCode ? await fetchTasksByMenuCode(selectedMenuCode) : [];
+      setSelectedTasks(refreshed || []);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || "Failed to delete task");
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -513,7 +517,7 @@ const TaskPage = () => {
                   </label>
 
                   <label className="block text-sm font-medium text-blueGray-600 md:col-span-2">
-                    Page (optional)
+                    Page 
                     <input
                       type="text"
                       name="page"
@@ -623,7 +627,7 @@ const TaskPage = () => {
                   </label>
 
                   <label className="block text-sm font-medium text-blueGray-600 md:col-span-2">
-                    Page (optional)
+                    Page 
                     <input
                       type="text"
                       name="page"
