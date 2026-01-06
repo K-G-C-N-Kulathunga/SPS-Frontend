@@ -67,7 +67,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   const handlefind = async () => {
     try {
       const response = await api.get(
-          `/applicants/${formData.idNo}`//applicants/findById/${formData.idNo}
+          `/applicants/findById/${formData.idNo}`//applicants/findById/${formData.idNo}
       );
       if (response.data) {
         setCustomerExists(true);
