@@ -111,9 +111,9 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
     if (!formData.tariffCatCode) {
       setFormData((prev) => ({
         ...prev,
-        tariffCatCode: "DP",
-        tariffCode: "11",
-        customerCategory: prev.customerCategory || "PRIV",
+        tariffCatCode: "",
+        tariffCode: "",
+        customerCategory: prev.customerCategory || "",
         weldingPlant: prev.weldingPlant || 0,
         metalCrusher: prev.metalCrusher || 0,
         sawMills: prev.sawMills || 0,
@@ -123,8 +123,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
 
   return (
     <div className="form-row ">
-      <div className="mt-4 mb-4 flex gap-4"></div>
-
+      <div className="form-box">
       {/* Phase */}
       <div className="form-box-inner">
         <div className="form-group">
@@ -208,7 +207,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="usageElectricity"
             name="usageElectricity"
-            className="form-input-half-electricity"
+            className="form-input"
             value={formData.usageElectricity || ""}
             onChange={(e) => setFormData({ ...formData, usageElectricity: e.target.value })}
           >
@@ -264,7 +263,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="customerCategory"
             name="customerCategory"
-            className="form-input-customer-category"
+            className="form-input"
             value={formData.customerCategory || ""}
             onChange={(e) => setFormData({ ...formData, customerCategory: e.target.value })}
             required
@@ -282,7 +281,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="customerType"
             name="customerType"
-            className="form-input-customer-type"
+            className="form-input"
             value={formData.customerType || ""}
             onChange={(e) => setFormData({ ...formData, customerType: e.target.value })}
           >
@@ -311,7 +310,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="tariffCatCode"
             name="tariffCatCode"
-            className="form-input-customer-category"
+            className="form-input"
             value={formData.tariffCatCode || ""}
             onChange={(e) => setFormData({ ...formData, tariffCatCode: e.target.value })}
             required
@@ -329,7 +328,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="tariffCode"
             name="tariffCode"
-            className="form-input-customer-type"
+            className="form-input"
             value ={formData.tariffCode || ""}
             onChange={(e) => setFormData({ ...formData, tariffCode: e.target.value })}
             required
@@ -433,6 +432,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -550,7 +550,7 @@
 
 /* Customer Category input */
 .form-input-customer-selection {
-  min-width: 250px;   /* ✅ Fixed width */
+  min-width: 50%;   /* ✅ Fixed width */
   padding: 4px 6px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
@@ -601,3 +601,4 @@
   flex-grow: 1;  /* Take up remaining space */
   min-width: 0;  /* Allow this element to shrink smaller than the text inside */
 }
+

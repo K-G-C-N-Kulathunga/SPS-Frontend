@@ -273,9 +273,9 @@ const NewCustomerStepper = () => {
     requestingTime: "",
     boundaryWall: "",
     preAccountNo: "",
-    tariffCatCode: "DP",
-    tariffCode: "11",
-    customerCategory: "PRIV",
+    tariffCatCode: "",
+    tariffCode: "",
+    customerCategory: "",
   });
 
   const [documentUpload, setDocumentUpload] = useState({

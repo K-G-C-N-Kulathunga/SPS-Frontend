@@ -528,7 +528,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 <select
                   id="customerCategory"
                   name="appSubType"
-                  className="form-input-customer-selection"
+                  className="form-input"
                   value={formData.appSubType || ""}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -554,7 +554,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 <select
                   id="customerCategory"
                   name="appSubType"
-                  className="form-input-customer-selection"
+                  className="form-input"
                   value={formData.loanType || ""} // **FIXED: Read from 'loanType'**
                   onChange={(e) =>
                     setFormData((prev) => ({
