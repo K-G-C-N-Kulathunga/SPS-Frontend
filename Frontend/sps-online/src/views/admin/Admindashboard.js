@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Admindashboard_4 = () => {
+const Admindashboard = () => {
   return (
     <div className="pt-24 pb-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -77,4 +77,4 @@ const Admindashboard_4 = () => {
   );
 };
 
-export default Admindashboard_4;
+export default Admindashboard;
