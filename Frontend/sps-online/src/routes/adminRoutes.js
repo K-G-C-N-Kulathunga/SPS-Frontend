@@ -8,6 +8,11 @@ import SchedulerPage from "views/admin/SchedulerPage";
 import NewEstimatePage from "views/admin/NewEstimatePage";
 import NewPIVPage from "views/admin/NewPIVPage";
 import Form from "views/admin/FormPage.js";
+import Admindashboard from "views/admin/Admindashboard";
+import MenuPage  from "views/admin/Page_1_Menu";
+import TaskPage from "views/admin/Page_2_Task_Screen";
+import RoleTasks from "views/admin/RoleTaskPage";
+import Departments from "views/admin/Departments";
 
 const normalizeKey = (value = "") =>
   value
@@ -133,6 +138,35 @@ const adminRoutes = [
     name: "Form",
     aliases: ["applicationform", "customerform", "formpage"],
   },
+  {
+    path: "/admin/dashboard_4",
+    component: Admindashboard,
+    name: "Admindashboard",
+    aliases: ["admindashboard", "admin-home", "adminmain"],
+  },
+  {
+    path: "/admin/menu_page",
+    component: MenuPage,
+    name: "MenuPage",
+    aliases: ["menupage", "menu-management", "sidebar-menus"],
+  },
+  {
+    path: "/admin/task_page",
+    component: TaskPage,
+    name: "TaskPage",
+    aliases: ["taskpage", "task-management", "menu-tasks"],
+  },
+  {
+    path: "/admin/role_tasks",
+    component: RoleTasks,
+    name: "RoleTasks",
+  },
+  {
+    path: "/admin/departments",
+    component: Departments,
+    name: "Departments",
+    aliases: ["departments", "department-management", "dept"],
+  }
 ];
 
 adminRoutes.forEach((route) => {
