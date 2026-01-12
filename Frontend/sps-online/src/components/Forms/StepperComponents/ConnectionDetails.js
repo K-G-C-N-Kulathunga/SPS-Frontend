@@ -6,6 +6,40 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
 
   // --- NEW: inline error messages per input ---
   const [errors, setErrors] = useState(["", "", "", ""]);
+  const [tariffCode, setTariffCode] = useState([]);
+  const [tariffCategory, setTariffCategory] = useState([]);
+
+  useEffect(() => {
+    const fetchTariffCodes = async () => {
+      try {
+        const response1 = await api.get(
+          "/masterdata/tariffcodes"
+        );
+        //Add this line to see the response data
+        console.log("Tariff Codes Response:", response1.data)
+        setTariffCode(response1.data);
+      } catch (err) {
+        console.log("Error fetching tariff:",err);
+      }
+    };
+    fetchTariffCodes();
+  }, [])
+
+  useEffect(() => {
+    const fetchTariffCategory = async () => {
+      try {
+        const response2 = await api.get(
+          "/masterdata/tariffCategory"
+        );
+        //Add this line to see the response data
+        console.log("Tariff Codes Response:", response2.data)
+        setTariffCategory(response2.data);
+      } catch (err) {
+        console.log("Error fetching tariff:",err);
+      }
+    };
+    fetchTariffCategory();
+  }, [])
 
   useEffect(() => {
     if (idNo) {
@@ -77,9 +111,9 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
     if (!formData.tariffCatCode) {
       setFormData((prev) => ({
         ...prev,
-        tariffCatCode: "DP",
-        tariffCode: "11",
-        customerCategory: prev.customerCategory || "PRIV",
+        tariffCatCode: "",
+        tariffCode: "",
+        customerCategory: prev.customerCategory || "",
         weldingPlant: prev.weldingPlant || 0,
         metalCrusher: prev.metalCrusher || 0,
         sawMills: prev.sawMills || 0,
@@ -89,8 +123,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
 
   return (
     <div className="form-row ">
-      <div className="mt-4 mb-4 flex gap-4"></div>
-
+      <div className="form-box">
       {/* Phase */}
       <div className="form-box-inner">
         <div className="form-group">
@@ -174,7 +207,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           <select
             id="usageElectricity"
             name="usageElectricity"
-            className="form-input-half-electricity"
+            className="form-input"
             value={formData.usageElectricity || ""}
             onChange={(e) => setFormData({ ...formData, usageElectricity: e.target.value })}
           >
@@ -193,7 +226,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
         </div>
 
         <div className="form-group">
-          <label className="form-label required">Requesting time of usage tarif?</label>
+          <label className="form-label required">Requesting time of usage tariff?</label>
           <div className="radio-group">
             <div className="radio-option">
               <input
@@ -221,6 +254,92 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
               <label htmlFor="requestingTime-no" className="radio-label">No</label>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="form-box-inner">
+        <div className="form-group">
+          <label className="form-label required">Customer Category:</label>
+          <select
+            id="customerCategory"
+            name="customerCategory"
+            className="form-input"
+            value={formData.customerCategory || ""}
+            onChange={(e) => setFormData({ ...formData, customerCategory: e.target.value })}
+            required
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="PRIV">Private</option>
+            <option value="GOVE">Government</option>
+            <option value="SEGO">Semi_Government</option>
+            <option value="FORE">Foreign</option>
+            <option value="RELI">Religious</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label required">Customer Type:</label>
+          <select
+            id="customerType"
+            name="customerType"
+            className="form-input"
+            value={formData.customerType || ""}
+            onChange={(e) => setFormData({ ...formData, customerType: e.target.value })}
+          >
+            <option value="" disabled>Select Type</option>
+            <option value="DOME">Domestic</option>
+            <option value="CONS">Construction</option>
+            <option value="SHOP">Shop/Office</option>
+            <option value="SCHL">School</option>
+            <option value="INDT">Industria</option>
+            <option value="HOTE">Hotel</option>
+            <option value="GARM">Garment</option>
+            <option value="FORC">Forces</option>
+            <option value="TEMP">Temple</option>
+            <option value="CHUR">Church</option>
+            <option value="MOSQ">Mosque</option>
+            <option value="FSER">Free Service</option>
+            <option value="AGRI">Agriculture</option>
+            <option value="lgov">Local Government Authority</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-box-inner">
+        <div className="form-group">
+          <label className="form-label required">Tariff Category Code:</label>
+          <select
+            id="tariffCatCode"
+            name="tariffCatCode"
+            className="form-input"
+            value={formData.tariffCatCode || ""}
+            onChange={(e) => setFormData({ ...formData, tariffCatCode: e.target.value })}
+            required
+          >
+            <option value="" disabled>Select Type</option>
+            {tariffCategory.map((item) => (
+              <option key={item.tariffCatName} value={item.tariffCatCode}>
+                {item.tariffCatName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label required">Tariff Code:</label>
+          <select
+            id="tariffCode"
+            name="tariffCode"
+            className="form-input"
+            value ={formData.tariffCode || ""}
+            onChange={(e) => setFormData({ ...formData, tariffCode: e.target.value })}
+            required
+          >
+            <option value="" disabled>Select Type</option>
+            {tariffCode.map((item) => (
+              <option key={item.tariffCode} value={item.tariffCode}>
+                {item.tariffCode}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -313,6 +432,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -36,6 +36,9 @@ const CalendarGrid = () => {
   const [appointments, setAppointments] = useState([]);
   const [detailsAppointment, setDetailsAppointment] = useState(null);
 
+  // 🔹 Date used to filter appointments on the map
+  const [filterDate, setFilterDate] = useState(null);
+
   // ------------ Fetch appointments (with lat/lng from backend) ------------
   const deptId = '411.40'; // change if needed
   useEffect(() => {
@@ -44,6 +47,11 @@ const CalendarGrid = () => {
       .then((res) => {
         console.log('Appointments from backend:', res.data);
         setAppointments(res.data);
+
+        // 🔹 On first load, show only today's appointments on the map
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        setFilterDate(d);
       })
       .catch((err) => {
         console.error('Error fetching appointments:', err);
@@ -66,16 +74,27 @@ const CalendarGrid = () => {
   const formatDateKey = (date) =>
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-  const handleCalendarSelect = (date) => {
-    const selected = new Date(date);
-    selected.setHours(0, 0, 0, 0);
-    if (selected >= today) {
-      setFormDate(selected);
-      setFormVisible(true);
-      setStartDate(selected);
-    }
-  };
+  // 📅 Calendar click: only change filterDate + week start, DO NOT open Add form
+  // const handleCalendarSelect = (date) => {
+  //   const selected = new Date(date);
+  //   selected.setHours(0, 0, 0, 0);
+  //   if (selected >= today) {
+  //     setFilterDate(selected);   // filter map by this date
+  //     setStartDate(selected);    // shift weekly schedule to that day
+  //     // ❌ no formVisible here
+  //   }
+  // };
 
+  const handleCalendarSelect = (date) => {
+  const selected = new Date(date);
+  selected.setHours(0, 0, 0, 0);
+
+  setFilterDate(selected);   // filter map by this date
+  setStartDate(selected);    // shift weekly schedule to that day
+};
+
+
+  // Weekly grid click → open Add New Appointment
   const handleGridClick = ({ date, session }) => {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
@@ -109,28 +128,57 @@ const CalendarGrid = () => {
     return null;
   };
 
-  // 🔹 All appointments that have valid coordinates
-  const appointmentsWithCoords = useMemo(
-    () =>
-      appointments
-        .map((a) => ({ ...a, coords: getCoords(a) }))
-        .filter((a) => a.coords),
-    [appointments]
-  );
+  // 🔹 Key for the date we are filtering on (for comparing with app.date)
+  const filterDateKey = useMemo(() => {
+    if (!filterDate) return null;
+    return formatDateKey(filterDate);
+  }, [filterDate]);
+
+  // 🔹 Appointments (with coords) only for the selected filterDate
+  const appointmentsForMap = useMemo(() => {
+    if (!filterDateKey) return [];
+
+    return appointments
+      .filter((app) => app.date === filterDateKey)
+      .map((a) => ({ ...a, coords: getCoords(a) }))
+      .filter((a) => a.coords);
+  }, [appointments, filterDateKey]);
 
   const detailsCoords = getCoords(detailsAppointment);
 
   // Map center priority:
-  // 1) detailsAppointment with coords
-  // 2) first appointment with coords
+  // 1) detailsAppointment with coords (and same date as filterDate, if filter set)
+  // 2) first appointment (for that date) with coords
   // 3) DEFAULT_CENTER
   const mapCenter = useMemo(() => {
-    if (detailsCoords) return detailsCoords;
-    if (appointmentsWithCoords.length > 0) {
-      return appointmentsWithCoords[0].coords;
+    if (
+      detailsCoords &&
+      (!filterDateKey || detailsAppointment?.date === filterDateKey)
+    ) {
+      return detailsCoords;
+    }
+    if (appointmentsForMap.length > 0) {
+      return appointmentsForMap[0].coords;
     }
     return DEFAULT_CENTER;
-  }, [detailsCoords, appointmentsWithCoords]);
+  }, [detailsCoords, detailsAppointment, appointmentsForMap, filterDateKey]);
+
+  const mapDateLabel = useMemo(() => {
+    if (!filterDate) return 'No date selected';
+    return filterDate.toLocaleDateString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  }, [filterDate]);
+
+  const mapSubtitle = useMemo(() => {
+    if (!filterDateKey) return 'No date selected';
+    if (appointmentsForMap.length === 0) {
+      return `No appointments for ${mapDateLabel}`;
+    }
+    return `Showing ${appointmentsForMap.length} appointment(s) for ${mapDateLabel}`;
+  }, [appointmentsForMap, filterDateKey, mapDateLabel]);
 
   // ------------ Render ------------
   return (
@@ -142,9 +190,9 @@ const CalendarGrid = () => {
           <h2 className="text-base font-semibold font-segoe text-gray-900 mb-4">
             Calendar
           </h2>
-          <Calendar
+          {/* <Calendar
             onChange={handleCalendarSelect}
-            value={formDate || today}
+            value={filterDate || today}
             tileDisabled={({ date, view }) => {
               if (view === 'month') {
                 const d = new Date(date);
@@ -159,13 +207,33 @@ const CalendarGrid = () => {
                 d.setHours(0, 0, 0, 0);
 
                 if (d < today) return 'disabled-tile';
-                if (formDate && d.getTime() === formDate.getTime())
+                if (filterDate && d.getTime() === filterDate.getTime())
                   return 'selected-tile';
               }
               return null;
             }}
             minDate={today}
+          /> */}
+
+          <Calendar
+            onChange={handleCalendarSelect}
+            value={filterDate || today}
+            tileDisabled={() => false}   // allow all dates clickable
+            tileClassName={({ date, view }) => {
+              if (view === 'month') {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+
+                if (filterDate && d.getTime() === filterDate.getTime())
+                  return 'selected-tile';
+
+                // OPTIONAL: style past dates differently (but still clickable)
+                if (d < today) return 'past-tile';
+              }
+              return null;
+            }}
           />
+
         </div>
 
         {/* Weekly Table */}
@@ -292,15 +360,14 @@ const CalendarGrid = () => {
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-base font-semibold font-segoe text-gray-900">
-              Location Map
+              Location Map{' '}
+              {filterDate && (
+                <span className="text-sm text-gray-500 ml-2">
+                  ({mapDateLabel})
+                </span>
+              )}
             </h3>
-            <span className="text-xs text-gray-500">
-              {detailsCoords
-                ? `Centered on: ${detailsAppointment.applicationId}`
-                : appointmentsWithCoords.length > 0
-                ? `Showing ${appointmentsWithCoords.length} appointments`
-                : `Default view (Colombo)`}
-            </span>
+            <span className="text-xs text-gray-500">{mapSubtitle}</span>
           </div>
 
           <div
@@ -323,18 +390,26 @@ const CalendarGrid = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {/* 🔹 Marker for ALL appointments that have coords */}
-              {appointmentsWithCoords.map((app) => (
+              {/* 🔹 Markers for all appointments for the selected date that have coords */}
+              {appointmentsForMap.map((app) => (
                 <Marker key={app.appointmentId} position={app.coords}>
                   <Popup>
-                    <div style={{ fontSize: '15px', height: '150px', width: '300px' }}>
+                    <div
+                      style={{
+                        fontSize: '15px',
+                        height: '150px',
+                        width: '300px',
+                      }}
+                    >
                       <div>
                         <strong>{app.name || 'Applicant'}</strong>
                       </div>
                       <div>App ID: {app.appointmentId}</div>
                       <div>Date: {app.date}</div>
                       <div>Session: {app.session}</div>
-                      <div className='font-bold mt-1'>Mobile: {app.phone}</div>
+                      <div className="font-bold mt-1">
+                        Mobile: {app.phone}
+                      </div>
                       <div style={{ marginTop: '4px' }}>
                         {app.address || 'No address'}
                       </div>

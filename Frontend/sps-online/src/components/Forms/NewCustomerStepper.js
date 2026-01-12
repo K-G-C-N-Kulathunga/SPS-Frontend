@@ -11,6 +11,8 @@ import { ConnectionDetails } from "../Forms/StepperComponents/ConnectionDetails"
 import DocumentUpload from "./StepperComponents/DocumentUpload";
 import { api } from '../../api';
 
+const ENABLE_OTP = false;
+
 // Optional: centralize SharedService base (or keep your fixed IP if required)
 const OTP_BASE =
   process.env.REACT_APP_SHARED_SERVICE_BASE ||
@@ -78,11 +80,54 @@ const NewCustomerStepper = () => {
   const [otpTimer, setOtpTimer] = useState(0);
   const otpInputRef = useRef(null);
 
+  // --- NEW STATE FOR INLINE MESSAGE ---
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showSuccessUpdateMessage, setShowSuccessUpdateMessage] = useState(false);
+  const [successRefNo, setSuccessRefNo] = useState("");
+
+  // CHANGED: Just hide message, DO NOT reload page
+  const handleSuccessClose = () => {
+    setShowSuccessMessage(false);
+  };
+
+  // 🟢 ADD THIS: Auto-hide the success message after 5 seconds
+  useEffect(() => {
+    if (showSuccessMessage) {
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 7500); 
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessMessage]);
+
+  const handleSuccessUpdateClose = () => {
+    setShowSuccessUpdateMessage(false);
+  };
+
+  useEffect(() => {
+    if (showSuccessUpdateMessage) {
+      const timer = setTimeout(() => {
+        setShowSuccessUpdateMessage(false);
+      }, 7500); 
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessUpdateMessage]);
+
   useEffect(() => {
     if (showOtpModal && otpInputRef.current) {
       otpInputRef.current.focus();
     }
   }, [showOtpModal]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, [activeTab]);
+
 
   useEffect(() => {
     if (!showOtpModal || otpTimer <= 0) return;
@@ -192,6 +237,9 @@ const NewCustomerStepper = () => {
     mobileNo: "",
     email: "",
     preferredLanguage: "",
+    appSubType: "",
+    loanType: "",
+    customerDescription: "",
   });
 
   const [contactPersonDetails, setContactPersonDetails] = useState({
@@ -216,8 +264,6 @@ const NewCustomerStepper = () => {
     customerType: "DOME",
     longitude: "",
     latitude: "",
-    area: "",
-    nearestCSC: "",
   });
 
   const [connectionDetails, setConnectionDetails] = useState({
@@ -227,6 +273,9 @@ const NewCustomerStepper = () => {
     requestingTime: "",
     boundaryWall: "",
     preAccountNo: "",
+    tariffCatCode: "",
+    tariffCode: "",
+    customerCategory: "",
   });
 
   const [documentUpload, setDocumentUpload] = useState({
@@ -406,6 +455,9 @@ const NewCustomerStepper = () => {
           mobile: customerDetails.mobileNo,
           preferredLanguage: customerDetails.preferredLanguage,
           personalCorporate: customerDetails.personalCorporate,
+          appSubType: customerDetails.appSubType,
+          loanType: customerDetails.loanType,
+          customerDescription: customerDetails.customerDescription,
         };
         response = await api.post(`/online-applications`, payload);
 
@@ -532,6 +584,9 @@ const NewCustomerStepper = () => {
         requestingTime: connectionDetails.requestingTime,
         boundaryWall: connectionDetails.boundaryWall,
         preAccountNo: connectionDetails.preAccountNo,
+        tariffCatCode: connectionDetails.tariffCatCode,
+        tariffCode: connectionDetails.tariffCode,
+        customerCategory: connectionDetails.customerCategory,
       };
 
       await api.put(`/online-applications/${tempIdToUse}`, payload);
@@ -574,9 +629,9 @@ const NewCustomerStepper = () => {
   // Submit: single multipart POST /application with JSON + files
   const handleSubmit = async () => {
     try {
-      // Prepare JSON payload for /application
+      // 1. Prepare JSON payload (Keep your existing code here)
       const formDataDto = {
-        applicantDto: {
+        formApplicantDto: {
           idNo: customerDetails.idNo,
           idType: customerDetails.idType,
           personalCorporate: customerDetails.personalCorporate,
@@ -591,8 +646,11 @@ const NewCustomerStepper = () => {
           mobileNo: customerDetails.mobileNo,
           email: customerDetails.email,
           preferredLanguage: customerDetails.preferredLanguage,
+          appSubType: customerDetails.appSubType,
+          loanType: customerDetails.loanType,
+          customerDescription: customerDetails.customerDescription,
         },
-        applicationDto: {
+        applicationFormRequestDto: {
           deptId: contactPersonDetails.deptId,
           contactIdNo: contactPersonDetails.contactIdNo,
           contactName: contactPersonDetails.contactName,
@@ -601,7 +659,7 @@ const NewCustomerStepper = () => {
           contactMobile: contactPersonDetails.contactMobile,
           contactEmail: contactPersonDetails.contactEmail,
         },
-        wiringLandDetailDto: {
+        formWiringLandDetailDto: {
           neighboursAccNo: serviceLocationDetails.neighboursAccNo,
           serviceStreetAddress: serviceLocationDetails.serviceStreetAddress,
           serviceSuburb: serviceLocationDetails.serviceSuburb,
@@ -612,24 +670,26 @@ const NewCustomerStepper = () => {
           deptId: serviceLocationDetails.deptId,
           phase: connectionDetails.phase,
           connectionType: connectionDetails.connectionType,
-          customerCategory: connectionDetails.customerCategory, // include if captured
-          tariffCatCode: connectionDetails.tariffCatCode,       // include if captured
-          tariffCode: connectionDetails.tariffCode,             // include if captured
-          customerType: serviceLocationDetails.customerType || "DOME",
+          customerCategory: connectionDetails.customerCategory, 
+          tariffCatCode: connectionDetails.tariffCatCode, 
+          tariffCode: connectionDetails.tariffCode,
+          customerType: connectionDetails.customerType || "DOME",
+          longitude: serviceLocationDetails.longitude,
+          latitude: serviceLocationDetails.latitude,
         },
       };
-      // Resolve tempId used during the draft flow
+
+      // 2. Resolve tempId (Keep existing code)
       const tempIdToUse = resolveTempIdForPut(location);
       if (!tempIdToUse) {
         alert("Temporary ID not found. Please start the application again from step 1.");
         return;
       }
 
-      // Build multipart form: JSON blob + files + tempId
-  const multipart = new FormData();
-  const jsonBlob = new Blob([JSON.stringify(formDataDto)], { type: "application/json" });
-  // Must match @RequestPart("formData") on the server
-  multipart.append("formData", jsonBlob);
+      // 3. Build multipart form (Keep existing code)
+      const multipart = new FormData();
+      const jsonBlob = new Blob([JSON.stringify(formDataDto)], { type: "application/json" });
+      multipart.append("formData", jsonBlob);
       multipart.append("tempId", tempIdToUse);
       if (documentUpload.idCopy) multipart.append("idCopy", documentUpload.idCopy);
       if (documentUpload.ownershipCertificate) multipart.append("ownershipCertificate", documentUpload.ownershipCertificate);
@@ -637,36 +697,56 @@ const NewCustomerStepper = () => {
       if (documentUpload.threephChartedEngineerCertificate)
         multipart.append("threephChartedEngineerCertificate", documentUpload.threephChartedEngineerCertificate);
 
-      const appResponse = await api.post(`/application`, multipart, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // --- LOGIC CHANGE STARTS HERE ---
+      
+      let appResponse;
 
-      // Extract reference number robustly
-      const data = appResponse?.data;
-      let refNo = null;
-      if (data && typeof data === "object") {
-        refNo = data.applicationNo || data.applicationId || data.ref || null;
-      } else if (typeof data === "string") {
-        refNo = data;
-      }
-      if (!refNo) {
-        console.error("No ref number in /application response:", data);
-        alert("We couldn't get your reference number. Please try again.");
-        return;
+      // Check if we already have a Reference Number (Update Mode)
+      if (successRefNo) {
+        // === PUT REQUEST (Update) ===
+        
+        appResponse = await api.put(`/newapplication?refNo=${encodeURIComponent(successRefNo)}`, multipart, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        
+        setShowSuccessUpdateMessage(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        console.log("Updated successfully");
+        
+      } else {
+        // === POST REQUEST (Create) ===
+        appResponse = await api.post(`/newapplication`, multipart, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        // Extract reference number
+        const data = appResponse?.data;
+        let refNo = null;
+        if (data && typeof data === "object") {
+          refNo = data.applicationNo || data.applicationId || data.ref || null;
+        } else if (typeof data === "string") {
+          refNo = data;
+        }
+        
+        if (!refNo) {
+           console.error("No ref number in /application response:", data);
+           alert("We couldn't get your reference number. Please try again.");
+           return;
+        }
+
+        sessionStorage.setItem("lastApplicationNo", refNo);
+        sessionStorage.setItem(
+          "lastCustomerName",
+          customerDetails.fullName || contactPersonDetails.contactName || ""
+        );
+
+        // SHOW SUCCESS MESSAGE (Only on first creation)
+        setSuccessRefNo(refNo);
+        setShowSuccessMessage(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
-      // Store + navigate to success
-      sessionStorage.setItem("lastApplicationNo", refNo);
-      sessionStorage.setItem(
-        "lastCustomerName",
-        customerDetails.fullName || contactPersonDetails.contactName || ""
-      );
-      alert(`Application submitted successfully! Ref: ${refNo}`);
-      history.push("/success", {
-        applicationNo: refNo,
-        customerName:
-          customerDetails.fullName || contactPersonDetails.contactName || "",
-      });
     } catch (error) {
       alert(
         "Submission failed: " + (error?.response?.data?.error || error.message)
@@ -755,6 +835,9 @@ const NewCustomerStepper = () => {
             mobileNo: data.mobile || "",
             email: data.email || "",
             preferredLanguage: data.preferredLanguage || "",
+            appSubType: data.appSubType || "",
+            loanType: data.loanType || "",
+            customerDescription: data.customerDescription || "",
           });
           setContactPersonDetails({
             contactIdNo: data.contactIdNo || "",
@@ -775,7 +858,7 @@ const NewCustomerStepper = () => {
             assessmentNo: data.assessmentNo || "",
             ownership: data.ownership || "",
             deptId: data.deptId || "",
-            customerType: "DOME",
+            customerType: data.customerType ||"DOME",
             longitude: data.longitude || "",
             latitude: data.latitude || "",
           }));
@@ -810,6 +893,9 @@ const NewCustomerStepper = () => {
             requestingTime: data.requestingTime || "",
             boundaryWall: data.boundaryWall || "",
             preAccountNo: data.preAccountNo || "",
+            tariffCatCode: data.tariffCatCode || "DP",
+            tariffCode: data.tariffCode || "11",
+            customerCategory: data.customerCategory || "PRIV",
           });
         })
         .catch(() => alert("Application not found"));
@@ -830,125 +916,113 @@ const NewCustomerStepper = () => {
   // Stepper navigation
   // =========================
   const handleNext = async () => {
-    try {
-      const params = new URLSearchParams(location.search);
-      const tempIdFromUrl = params.get("tempId"); // presence => Existing Application
+  try {
+    const params = new URLSearchParams(location.search);
+    const tempIdFromUrl = params.get("tempId"); // presence => Existing Application
 
-      if (activeTab === 0) {
-        const missing = [];
-        if (!customerDetails.personalCorporate) missing.push("Select Type");
-        if (!customerDetails.idNo) missing.push("ID No");
-        if (!customerDetails.fullName) missing.push("Full Name");
-        if (!customerDetails.firstName) missing.push("First Name");
-        if (!customerDetails.lastName) missing.push("Last Name");
-        if (!customerDetails.suburb) missing.push("Street Name");
-        if (!customerDetails.mobileNo) missing.push("Mobile No");
-        if (!customerDetails.streetAddress) missing.push("Street Address");
-        if (!customerDetails.city) missing.push("City");
-        if (!customerDetails.preferredLanguage) missing.push("Preferred Language");
+    if (activeTab === 0) {
+      const missing = [];
+      if (!customerDetails.personalCorporate) missing.push("Select Type");
+      if (!customerDetails.idNo) missing.push("ID No");
+      if (!customerDetails.fullName) missing.push("Full Name");
+      if (!customerDetails.firstName) missing.push("First Name");
+      if (!customerDetails.lastName) missing.push("Last Name");
+      if (!customerDetails.suburb) missing.push("Street Name");
+      if (!customerDetails.mobileNo) missing.push("Mobile No");
+      if (!customerDetails.streetAddress) missing.push("Street Address");
+      if (!customerDetails.city) missing.push("City");
+      if (!customerDetails.preferredLanguage) missing.push("Preferred Language");
+      if (!customerDetails.appSubType) missing.push("Application Sub Type"); // ADDED
+      if (!customerDetails.loanType) missing.push("Loan Type");
 
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required customer details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
+      if (missing.length > 0) {
+        alert(`Please fill all required customer details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
 
-        await postCustomerDetails();
+      await postCustomerDetails();
 
-        if (!tempIdFromUrl) {
-          const tmp = await generateTempId();
-          if (!tmp) {
-            alert("Could not generate a temporary ID. Try again.");
-            return;
-          }
-        }
-
-        // 🔐 OTP for NEW application only
-        if (!tempIdFromUrl) {
-          const sent = await sendOtp(customerDetails.mobileNo);
-          if (sent) {
-            return; // Wait until user verifies
-          }
-        }
-      } else if (activeTab === 1) {
-        const missing = [];
-        // if (!serviceLocationDetails.assessmentNo) missing.push("Assessment No");
-        if (!serviceLocationDetails.deptId) missing.push("Department");
-        if (!serviceLocationDetails.serviceStreetAddress)
-          missing.push("Service Street Address");
-        if (!serviceLocationDetails.serviceSuburb) missing.push("Service Suburb");
-        if (!serviceLocationDetails.serviceCity) missing.push("Service City");
-        if (!serviceLocationDetails.ownership) missing.push("Ownership");
-        if (!serviceLocationDetails.latitude) missing.push("Latitude");
-        if (!serviceLocationDetails.longitude) missing.push("Longitude");
-        // if (!serviceLocationDetails.neighboursAccNo)
-        //   missing.push("Neighbour's Account No");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required service location details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postServiceLocationDetails();
-      } else if (activeTab === 2) {
-        const missing = [];
-        if (!connectionDetails.phase) missing.push("Phase");
-        if (!connectionDetails.connectionType) missing.push("Connection Type");
-        if (!connectionDetails.usageElectricity)
-          missing.push("Usage of Electricity");
-        if (!connectionDetails.requestingTime) missing.push("Requesting Time");
-        if (!connectionDetails.boundaryWall) missing.push("Boundary Wall");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required connection details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postConnectionDetails();
-      } else if (activeTab === 3) {
-        const missing = [];
-        if (!contactPersonDetails.contactName) missing.push("Contact Name");
-        if (!contactPersonDetails.contactIdNo) missing.push("Contact ID No");
-        if (!contactPersonDetails.contactAddress) missing.push("Contact Address");
-        // if (!contactPersonDetails.contactTelephone)
-        //   missing.push("Contact Telephone");
-        if (!contactPersonDetails.contactMobile) missing.push("Contact Mobile");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required contact person details.\nMissing: ${missing.join(", ")}`
-          );
-          return;
-        }
-
-        await postContactPersonDetails();
-      } else if (activeTab === 4) {
-        const missing = [];
-        if (!documentUpload.idCopy) missing.push("ID Copy");
-        if (!documentUpload.ownershipCertificate)
-          missing.push("Ownership Certificate");
-        if (!documentUpload.gramaNiladhariCertificate)
-          missing.push("Grama Niladhari Certificate");
-
-        if (missing.length > 0) {
-          alert(
-            `Please fill all required document upload fields.\nMissing: ${missing.join(", ")}`
-          );
+      if (!tempIdFromUrl) {
+        const tmp = await generateTempId();
+        if (!tmp) {
+          alert("Could not generate a temporary ID. Try again.");
           return;
         }
       }
 
-      setActiveTab((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error during post operations:", error);
-      alert("Something went wrong while submitting. Please try again.");
+      // ✅ OTP REMOVED — FLOW CONTINUES DIRECTLY
     }
-  };
+
+    else if (activeTab === 1) {
+      const missing = [];
+      if (!serviceLocationDetails.serviceStreetAddress) missing.push("Service Street Address");
+      if (!serviceLocationDetails.serviceSuburb) missing.push("Service Suburb");
+      if (!serviceLocationDetails.serviceCity) missing.push("Service City");
+      if (!serviceLocationDetails.ownership) missing.push("Ownership");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required service location details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postServiceLocationDetails();
+    }
+
+    else if (activeTab === 2) {
+      const missing = [];
+      if (!connectionDetails.phase) missing.push("Phase");
+      if (!connectionDetails.connectionType) missing.push("Connection Type");
+      if (!connectionDetails.usageElectricity) missing.push("Usage of Electricity");
+      if (!connectionDetails.requestingTime) missing.push("Requesting Time");
+      if (!connectionDetails.boundaryWall) missing.push("Boundary Wall");
+      if (!connectionDetails.tariffCatCode) missing.push("Tariff Category Code"); // ADDED
+      if (!connectionDetails.tariffCode) missing.push("Tariff Code"); // ADDED
+      if (!connectionDetails.customerCategory) missing.push("Customer Category"); // ADDED
+
+      if (missing.length > 0) {
+        alert(`Please fill all required connection details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postConnectionDetails();
+    }
+
+    else if (activeTab === 3) {
+      const missing = [];
+      if (!contactPersonDetails.contactName) missing.push("Contact Name");
+      if (!contactPersonDetails.contactIdNo) missing.push("Contact ID No");
+      if (!contactPersonDetails.contactAddress) missing.push("Contact Address");
+      if (!contactPersonDetails.contactMobile) missing.push("Contact Mobile");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required contact person details.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+
+      await postContactPersonDetails();
+    }
+
+    else if (activeTab === 4) {
+      const missing = [];
+      if (!documentUpload.idCopy) missing.push("ID Copy");
+      if (!documentUpload.ownershipCertificate) missing.push("Ownership Certificate");
+      if (!documentUpload.gramaNiladhariCertificate) missing.push("Grama Niladhari Certificate");
+
+      if (missing.length > 0) {
+        alert(`Please fill all required document upload fields.\nMissing: ${missing.join(", ")}`);
+        return;
+      }
+    }
+
+    // ✅ Move to next tab always
+    setActiveTab((prev) => prev + 1);
+
+  } catch (error) {
+    console.error("Error during post operations:", error);
+    alert("Something went wrong while submitting. Please try again.");
+  }
+};
+
 
   const handlePrev = () => {
     if (activeTab > 0) {
@@ -994,6 +1068,76 @@ const NewCustomerStepper = () => {
                   <h6 className=" py-0 text-xl text-center font-bold text-blueGray-700">
                     {tabs[activeTab].name}
                   </h6>
+
+                  {showSuccessMessage && (
+                    <div className="mx-auto w-full max-w-5xl mb-4 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm relative text-center">
+                      
+                      {/* Close Button */}
+                      <button 
+                        onClick={handleSuccessClose}
+                        className="absolute top-2 right-2 text-green-700 hover:text-green-900 font-bold text-xl px-2"
+                        title="Close message and edit form"
+                      >
+                        &times;
+                      </button>
+
+                      <div className="flex flex-col items-center justify-center">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-2">
+                          <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.2"/>
+                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#22c55e"/>
+                          <path d="M7 12L10.5 15.5L17 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        
+                        <h3 className="text-green-800 font-bold text-xl">Application Submitted Successfully!</h3>
+                        
+                        <div className="mt-2 bg-white px-6 py-2 rounded border border-green-100">
+                          <span className="text-gray-500 text-sm block">Reference Number</span>
+                          <span className="text-gray-900 font-bold text-2xl">{successRefNo}</span>
+                        </div>
+
+                        <p className="text-green-700 mt-3 font-medium">
+                           You can continue to edit the details below if needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                 {showSuccessUpdateMessage && (
+                    <div className="mx-auto w-full max-w-5xl mb-4 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm relative text-center">
+                      
+                      {/* Close Button */}
+                      <button 
+                        onClick={handleSuccessUpdateClose}
+                        className="absolute top-2 right-2 text-green-700 hover:text-green-900 font-bold text-xl px-2"
+                        title="Close message"
+                      >
+                        &times;
+                      </button>
+
+                      <div className="flex flex-col items-center justify-center">
+                        {/* Green Checkmark Icon (Same attractive icon as before) */}
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-2">
+                          <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.2"/>
+                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#22c55e"/>
+                          <path d="M7 12L10.5 15.5L17 9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        
+                        {/* Title */}
+                        <h3 className="text-green-800 font-bold text-xl">Application Updated Successfully!</h3>
+                        
+                        {/* Reference Number Box */}
+                        <div className="mt-2 bg-white px-6 py-2 rounded border border-green-100">
+                          <span className="text-gray-500 text-sm block">Reference Number</span>
+                          <span className="text-gray-900 font-bold text-2xl">{successRefNo}</span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-green-700 mt-3 font-medium">
+                            Your changes have been saved successfully.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="p-2 rounded w-full max-w-5xl">
                     {activeTab === 3 ? (
@@ -1113,6 +1257,8 @@ const NewCustomerStepper = () => {
                     )}
                   </div>
                 </div>
+
+                
 
                 <div className="flex justify-between items-center mb-1">
                   <div className="form-row-button">

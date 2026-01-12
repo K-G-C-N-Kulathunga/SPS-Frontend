@@ -3,13 +3,14 @@ import { Link, useHistory } from "react-router-dom";
 import { FaSignOutAlt, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
 import ceb from "../../assets/img/ceb.png";
+import { resolveAdminRoute } from "routes/adminRoutes";
 
 export default function Sidebar() {
   const { mainMenus,menusLoading, logout, menuTasks, fetchTasksForMenu } = useUser();
   const history = useHistory();
     const [expandedMenu, setExpandedMenu] = useState(null);
 
-        // Resolve route for a given menu/task, allowing overrides without relying on backend codes
+        // Resolve the target route using the page column supplied by the backend task metadata.
         const getTaskPath = (menu, task) => {
             const menuName = (menu.displayName || '').toLowerCase();
             const taskName = (task.activityName || '').toLowerCase();
@@ -130,9 +131,34 @@ export default function Sidebar() {
                                               {menuTasks[menu.menuCode] && menuTasks[menu.menuCode].length > 0 ? (
                                                   menuTasks[menu.menuCode].map((task) => (
                                                       <li key={task.activityCode} className="py-1 px-2 hover:bg-blueGray-100 rounded">
-                                                          <Link to={getTaskPath(menu, task)}>
-                                                              {task.activityName}
-                                                          </Link>
+                                                          {(() => {
+                                                              const rawPath = getTaskPath(menu, task) || "";
+                                                              const lowerMenu = (menu.displayName || "").toLowerCase();
+                                                              const lowerTask = (task.activityName || "").toLowerCase();
+
+                                                              // Default destination
+                                                              let to = rawPath;
+
+                                                              // For Service Estimate menu, force single page route and pass mode via query
+                                                              const isServiceEstimate = lowerMenu.includes("service") && lowerMenu.includes("estimate");
+                                                              if (isServiceEstimate) {
+                                                                  if (lowerTask.includes("add")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=ADD" };
+                                                                  } else if (lowerTask.includes("modify") || lowerTask.includes("edit") || lowerTask.includes("update")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=MODIFY" };
+                                                                  } else if (lowerTask.includes("delete") || lowerTask.includes("remove")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=DELETE" };
+                                                                  } else if (lowerTask.includes("view") || lowerTask.includes("read") || lowerTask.includes("print")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=VIEW" };
+                                                                  }
+                                                              }
+
+                                                              return (
+                                                                  <Link to={to}>
+                                                                      {task.activityName}
+                                                                  </Link>
+                                                              );
+                                                          })()}
                                                       </li>
                                                   ))
                                               ) : (

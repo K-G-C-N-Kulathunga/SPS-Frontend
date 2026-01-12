@@ -306,64 +306,6 @@ const ServiceLocationDetails = ({
       <div className="form-box">
         {error && <div className="error-message">{error}</div>}
 
-        {/* Your Area dropdown */}
-        <div className="form-box-inner">
-          {/* <div className="form-group">
-            <label className="form-label">Neighbour's Acc No:</label>
-            <input
-                type="text"
-                id="neighboursAccNo"
-                name="neighboursAccNo"
-                className="form-input"
-                value={formData.neighboursAccNo || ""}
-                onChange={handleChange}
-                maxLength={10}
-                inputMode="numeric"
-            />
-          </div> */}
-          <div className="form-group">
-            <label className="form-label required"> Area</label>
-            <select
-                id="area"
-                name="area"
-                className="form-select"
-                value={formData?.area || ""}
-                onChange={handleChange}
-                disabled={loadingAreas}
-            >
-              <option value="">Select Area</option>
-              {areas.map((area) => (
-                  <option key={area.deptId} value={area.deptArea}>
-                    {area.deptArea}
-                  </option>
-              ))}
-            </select>
-            {loadingAreas && <div>Loading areas...</div>}
-          </div>
-          <div className="form-group">
-            <label className="form-label required" title="Nearet Counsumer Service Center">
-              Nearest CSC
-            </label>
-            <select
-                id="csc"
-                name="deptId"
-                className="form-select"
-                value={formData?.deptId || ""}
-                onChange={handleChange}
-                disabled={loadingCscs || !formData?.area}
-                required
-            >
-              <option value="">Select CSC</option>
-              {cscs.map((csc) => (
-                  <option key={csc.deptId} value={csc.deptId}>
-                    {csc.deptFullName}
-                  </option>
-              ))}
-            </select>
-            {loadingCscs && <div>Loading CSCs...</div>}
-          </div>
-        </div>
-
         {/* CSC Dropdown */}
         <div className="form-box-inner">
           {/* <div className="form-group">
@@ -582,7 +524,7 @@ const ServiceLocationDetails = ({
             gap: '15px'
           }}>
             <div className="form-group">
-              <label className="form-label required">Latitude:</label>
+              <label className="form-label">Latitude:</label>
               <input
                   type="text"
                   id="latitude"
@@ -594,7 +536,7 @@ const ServiceLocationDetails = ({
             </div>
 
             <div className="form-group">
-              <label className="form-label required">Longitude:</label>
+              <label className="form-label">Longitude:</label>
               <input
                   type="text"
                   id="longitude"
