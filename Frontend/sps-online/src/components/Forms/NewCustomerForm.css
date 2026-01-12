@@ -423,7 +423,6 @@
   color: #4a5568;
   width: 14px;
   height: 14px;
-
 }
 
 .radio-label {
@@ -601,4 +600,5 @@
   flex-grow: 1;  /* Take up remaining space */
   min-width: 0;  /* Allow this element to shrink smaller than the text inside */
 }
+
 
