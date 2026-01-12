@@ -11,6 +11,24 @@ import {
   sanitizeOrder,
 } from "./menuTaskConfig";
 
+// Helper: fetch menus from API and map to local shape
+async function fetchMenusFromApi() {
+  const res = await api.get("/main-menus");
+  const data = res.data || [];
+  return Array.isArray(data)
+    ? data.map((m) => ({
+        menuCode: m.menuCode ?? "",
+        displayName: m.displayName ?? "",
+        description: m.description ?? "",
+        orderKey:
+          m.orderKey === null || typeof m.orderKey === "undefined" || m.orderKey === ""
+            ? null
+            : Number(m.orderKey),
+        source: "api",
+      }))
+    : [];
+}
+
 const MenuPage = () => {
   const [menus, setMenus] = useState([]);
   const [menuForm, setMenuForm] = useState(emptyMenu);
@@ -106,7 +124,7 @@ useEffect(() => {
     setMenuMessage("");
   };
 
-  const handleAddMenu = (event) => {
+  const handleAddMenu = async (event) => {
     event.preventDefault();
     setMenuMessage("");
 
@@ -126,18 +144,31 @@ useEffect(() => {
       return;
     }
 
-    const newMenu = {
+    const payload = {
       menuCode: code,
       displayName: label,
       description: menuForm.description.trim(),
       orderKey: menuForm.orderKey ? Number(menuForm.orderKey) : null,
-      source: "draft",
     };
 
-    setMenus((prev) => [...prev, newMenu]);
-    setMenuForm(emptyMenu);
-    setMenuMessage(`Draft menu ${code} added.`);
-    setIsCreateOpen(false); // ✅ close popup after success
+    try {
+      setLoadingMenus(true);
+      // send to backend
+      await api.post("/main-menus", payload);
+
+      // refresh menus from server
+      const apiMenus = await fetchMenusFromApi();
+      setMenus(apiMenus);
+
+      setMenuForm(emptyMenu);
+      setMenuMessage(`Menu ${code} created.`);
+      setIsCreateOpen(false);
+    } catch (err) {
+      console.error("Error creating menu:", err);
+      setMenuMessage(err?.response?.data?.message || err.message || "Failed to create menu");
+    } finally {
+      setLoadingMenus(false);
+    }
   };
 
   const handleRemoveMenu = (menuCode) => {
@@ -210,7 +241,7 @@ const handleEditChange = ({ target }) => {
   setEditMessage("");
 };
 
-const handleUpdateMenu = (e) => {
+const handleUpdateMenu = async (e) => {
   e.preventDefault();
   setEditMessage("");
 
@@ -222,31 +253,47 @@ const handleUpdateMenu = (e) => {
     return;
   }
 
-  // If you allow editing menuCode, ensure no duplicates besides itself
-  const duplicate = menus.some(
-    (m) =>
-      m.menuCode.toUpperCase() === code.toUpperCase() &&
-      m.menuCode !== editForm._originalMenuCode // (only if you track original)
-  );
+  const payload = {
+    menuCode: code,
+    displayName: label,
+    description: editForm.description.trim(),
+    orderKey: editForm.orderKey ? Number(editForm.orderKey) : null,
+  };
 
-  // Simpler: if you DON'T allow editing menuCode, skip duplicate check entirely.
+  try {
+    setLoadingMenus(true);
+    await api.put(`/main-menus/${encodeURIComponent(code)}`, payload);
 
-  setMenus((prev) =>
-    prev.map((m) => {
-      if (m.menuCode !== editForm.menuCode) return m;
+    const apiMenus = await fetchMenusFromApi();
+    setMenus(apiMenus);
 
-      return {
-        ...m,
-        menuCode: code,
-        displayName: label,
-        description: editForm.description.trim(),
-        orderKey: editForm.orderKey ? Number(editForm.orderKey) : null,
-      };
-    })
-  );
+    setIsEditOpen(false);
+    setEditMessage(`Menu ${code} updated.`);
+  } catch (err) {
+    console.error("Error updating menu:", err);
+    setEditMessage(err?.response?.data?.message || err.message || "Failed to update menu");
+  } finally {
+    setLoadingMenus(false);
+  }
+};
 
-  setIsEditOpen(false);
-  setEditMessage("");
+const handleDeleteMenu = async (menuCode) => {
+  const ok = typeof window !== "undefined" ? window.confirm(`Delete menu ${menuCode}?`) : true;
+  if (!ok) return;
+
+  try {
+    setLoadingMenus(true);
+    await api.delete(`/main-menus/${encodeURIComponent(menuCode)}`);
+
+    const apiMenus = await fetchMenusFromApi();
+    setMenus(apiMenus);
+    setMenuMessage(`Menu ${menuCode} deleted.`);
+  } catch (err) {
+    console.error("Error deleting menu:", err);
+    setMenuMessage(err?.response?.data?.message || err.message || "Failed to delete menu");
+  } finally {
+    setLoadingMenus(false);
+  }
 };
 
   return (
@@ -350,7 +397,7 @@ const handleUpdateMenu = (e) => {
                 </div>
 
         {/* Right side actions */}
-        <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1">
           {menu.orderKey != null && (
             <span className="text-[10px] text-blueGray-400">
               #{menu.orderKey}
@@ -365,7 +412,11 @@ const handleUpdateMenu = (e) => {
             Edit
           </button>
 
-          <button className="bg-red-500 text-white text-[9px] px-1 py-0.5 rounded hover:bg-red-600">
+          <button
+            type="button"
+            onClick={() => handleDeleteMenu(menu.menuCode)}
+            className="bg-red-500 text-white text-[9px] px-1 py-0.5 rounded hover:bg-red-600"
+          >
             Delete
           </button>
         </div>

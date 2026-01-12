@@ -19,7 +19,6 @@ import CostEstimation from "views/admin/CostEstimation";
 import SchedulerPage from "views/admin/SchedulerPage";
 import NewEstimatePage from "views/admin/NewEstimatePage";
 import Form from"views/admin/FormPage.js";
-import MenuTaskManagement from "views/admin/new_for_admin.js";
 import  MenuPage  from "views/admin/Page_1_Menu.js";
 import  TaskPage  from "views/admin/Page_2_Task_Screen";
 import RoleTaskPage from "views/admin/RoleTaskPage";

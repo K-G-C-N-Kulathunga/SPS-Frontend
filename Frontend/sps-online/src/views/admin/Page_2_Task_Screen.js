@@ -10,7 +10,7 @@ function useQuery() {
 // ✅ Example API helpers (replace with your axios calls)
 async function fetchMenuCodesFromApi() {
   try {
-    const res = await api.get("/tasks");
+    const res = await api.get("/main-menus");
     console.log("status:", res.status);
     console.log("data sample:", res.data?.[0]);
     const codes = [...new Set((res.data || []).map((t) => t.menuCode).filter(Boolean))].sort();

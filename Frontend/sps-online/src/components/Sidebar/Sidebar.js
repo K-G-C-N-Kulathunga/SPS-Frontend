@@ -15,43 +15,43 @@ export default function Sidebar() {
             const taskName = (task.activityName || '').toLowerCase();
 
             // If user clicks "Add" under "Service Estimate", go to Service Estimate Details page
-            if (menuName.includes('service estimate') && taskName === 'add') {
-                return '/admin/service-estimation/details';
-            }
+            // if (menuName.includes('service estimate') && taskName === 'add') {
+            //     return '/admin/service-estimation/details';
+            // }
 
-             if (menuName.includes('service estimate') && taskName === 'modify') {
-                return '/admin/service-estimation/details';
-            }
+            //  if (menuName.includes('service estimate') && taskName === 'modify') {
+            //     return '/admin/service-estimation/details';
+            // }
 
             // If user clicks "Add" under Calendar (or Calendar-like menus), go to Scheduler page
             // Accept common spellings/variants and the specific menu code 'NCD'
-            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'add') {
-                return '/admin/scheduler';
-            }
+            // if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'add') {
+            //     return '/admin/scheduler';
+            // }
 
 
-            if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'modify') {
-                return '/admin/scheduler';
-            }
+            // if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'modify') {
+            //     return '/admin/scheduler';
+            // }
 
-            if (menuName.includes('application') && taskName === 'add') {
-                return '/admin/form';
-            }
+            // if (menuName.includes('application') && taskName === 'add') {
+            //     return '/admin/form';
+            // }
 
-            if (menuName.includes('application') && taskName === 'modify') {
-                return '/admin/form';
-            }
+            // if (menuName.includes('application') && taskName === 'modify') {
+            //     return '/admin/form';
+            // }
 
-            if (menuName.includes('new estimate') && taskName === 'add') {
-                return '/admin/NewEstimate';
-            }
-             if (menuName.includes('new estimate') && taskName === 'modify') {
-                return '/admin/NewEstimate';
-            }
+            // if (menuName.includes('new estimate') && taskName === 'add') {
+            //     return '/admin/NewEstimate';
+            // }
+            //  if (menuName.includes('new estimate') && taskName === 'modify') {
+            //     return '/admin/NewEstimate';
+            // }
 
 
             // Default behavior: keep current pattern
-            return `/admin/${menu.menuCode}/${task.activityCode}`;
+            return `${task.page}`;
         };
 
     // Get userId from localStorage/sessionStorage
@@ -121,7 +121,7 @@ export default function Sidebar() {
                                           className="flex items-center justify-between py-2 px-4 rounded hover:bg-blueGray-700 transition cursor-pointer"
                                           onClick={() => handleMenuClick(menu.menuCode)}
                                       >
-                                          <span>{menu.displayName}</span>
+                                          <span>{menu.description}</span>
                                           {expandedMenu === menu.menuCode ? <FaChevronUp /> : <FaChevronDown />}
                                       </div>
                                       {/* Show tasks if this menu is expanded */}

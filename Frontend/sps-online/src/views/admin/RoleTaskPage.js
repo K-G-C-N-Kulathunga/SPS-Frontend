@@ -1,147 +1,160 @@
-// src/views/admin/RoleTaskPage.jsx
+// src/views/admin/DeptTaskAssignPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "api";
 
+function toErrorText(e) {
+  const d = e?.response?.data;
+  if (typeof d === "string") return d;
+  if (d?.message) return d.message;
+  if (d?.detail) return d.detail;
+  if (d?.error) return d.error;
+  return e?.message || "Server error";
+}
+
+
+
 /* ============================
-   API HELPERS (Backend)
+   API HELPERS
    ============================ */
 
-// 1) Roles list (UserCategory)
-async function fetchRoles() {
-  const res = await api.get("task-user-categories"); // change if your endpoint differs
-  const rows = Array.isArray(res.data) ? res.data : [];
-
-  const mapped = rows
-    .map((r) => ({
-      id: r.userRoleCode ?? r.userId ?? r.id ?? "",
-      name: r.userRoleName ?? r.userName ?? r.name ?? r.userRoleCode ?? "",
-    }))
-    .filter((x) => x.id);
-
-  // ✅ distinct by id
-  const map = new Map();
-  for (const r of mapped) {
-    if (!map.has(r.id)) map.set(r.id, r);
-  }
-  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+async function fetchDepartments() {
+  const res = await api.get("/dept-types");
+  return Array.isArray(res.data) ? res.data : [];
 }
 
+async function fetchUsers() {
+  const res = await api.get("/users");
+  return Array.isArray(res.data) ? res.data : [];
+}
 
-// 2) Menus
 async function fetchMenus() {
   const res = await api.get("/main-menus");
-  return res.data || [];
+  return Array.isArray(res.data) ? res.data : [];
 }
 
-// 3) Tasks
-async function fetchAllTasks() {
-  const res = await api.get("/tasks");
-  return res.data || [];
+// dept -> menuCodes
+async function fetchDeptMenuCodes(deptTypeCode) {
+  const res = await api.get(`/dept-type-menus/dept/${encodeURIComponent(deptTypeCode)}/menu-codes`);
+  return Array.isArray(res.data) ? res.data : [];
 }
 
-// group tasks by menuCode
-function groupTasksByMenu(tasks = []) {
-  const arr = Array.isArray(tasks) ? tasks : [];
-  return arr.reduce((acc, t) => {
-    const key = t.menuCode || "";
-    if (!key) return acc;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(t);
-    return acc;
-  }, {});
+// bulk save dept menus
+async function saveDeptMenus(deptTypeCode, menuCodes) {
+  await api.put(`/dept-type-menus/dept/${encodeURIComponent(deptTypeCode)}`, { menuCodes });
 }
 
-// 4) Role -> task mappings (TaskUserCategory)
-async function fetchRoleAssignments(roleCode) {
-  // controller we suggested: /api/task-user-categories/user/{roleCode}
-  const res = await api.get(`/task-user-categories/user/${encodeURIComponent(roleCode)}`);
-  return res.data || []; // array of {userRoleCode, menuCode, activityCode}
+// dept+user -> menus/tasks tree
+async function fetchDeptUserTree(deptTypeCode, userId) {
+  const res = await api.get(
+    `/dept-task-assign/dept/${encodeURIComponent(deptTypeCode)}/user/${encodeURIComponent(userId)}`
+  );
+  return Array.isArray(res.data) ? res.data : [];
 }
 
-// 5) Create mapping (assign)
-async function createAssignment(payload) {
-  // POST /task-user-categories
-  const res = await api.post("/task-user-categories", payload);
+// save assignments
+async function saveDeptUserAssignments(userId, payload) {
+  await api.put(`/dept-task-assign/user/${encodeURIComponent(userId)}`, payload);
+}
+
+async function createDepartment(payload) {
+  const res = await api.post("/dept-types", payload);
   return res.data;
 }
 
-// 6) Delete mapping (unassign)
-async function deleteAssignment({ userRoleCode, menuCode, activityCode }) {
-  // DELETE /task-user-categories?userRoleCode=...&menuCode=...&activityCode=...
-  await api.delete("/task-user-categories", {
-    params: { userRoleCode, menuCode, activityCode },
-  });
+async function createUser(payload) {
+  const res = await api.post("/users", payload);
+  return res.data;
 }
 
 /* ============================
    PAGE
    ============================ */
 
-const RoleTaskPage = () => {
-  const [roles, setRoles] = useState([]); // [{id,name}]
-  const [selectedRole, setSelectedRole] = useState(""); // roleCode
+const DeptTaskAssignPage = () => {
+  const [departments, setDepartments] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [allMenus, setAllMenus] = useState([]);
 
-  const [menus, setMenus] = useState([]);
-  const [tasksByMenu, setTasksByMenu] = useState({}); // { menuCode: [task...] }
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
 
-  // assignments for selected role as Set of "menuCode::activityCode"
-  const [assignedKeys, setAssignedKeys] = useState(new Set());
+  // Dept menu assignment
+  const [deptMenuKeys, setDeptMenuKeys] = useState(new Set());
+  const [deptMenusDirty, setDeptMenusDirty] = useState(false);
+
+  // Tree for tasks
+  const [tree, setTree] = useState([]);
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [tasksDirty, setTasksDirty] = useState(false);
 
   const [loading, setLoading] = useState({
-    roles: false,
-    menus: false,
-    tasks: false,
-    assignments: false,
-    saving: false,
+    init: false,
+    deptMenus: false,
+    tree: false,
+    savingDeptMenus: false,
+    savingTasks: false,
   });
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  // Sort menus by orderKey then displayName
-  const sortedMenus = useMemo(() => {
-    return [...menus].sort((a, b) => {
-      const orderA = Number.isFinite(a.orderKey) ? a.orderKey : Number.MAX_SAFE_INTEGER;
-      const orderB = Number.isFinite(b.orderKey) ? b.orderKey : Number.MAX_SAFE_INTEGER;
-      if (orderA !== orderB) return orderA - orderB;
+  // modals
+  const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
+  const [deptForm, setDeptForm] = useState({ deptTypeCode: "", name: "" });
+  const [deptMsg, setDeptMsg] = useState("");
+
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [userForm, setUserForm] = useState({ userId: "", name: "" });
+  const [userMsg, setUserMsg] = useState("");
+
+  const sortedAllMenus = useMemo(() => {
+    return [...allMenus].sort((a, b) => {
+      const oa = Number.isFinite(a.orderKey) ? a.orderKey : Number.MAX_SAFE_INTEGER;
+      const ob = Number.isFinite(b.orderKey) ? b.orderKey : Number.MAX_SAFE_INTEGER;
+      if (oa !== ob) return oa - ob;
       return String(a.displayName || "").localeCompare(String(b.displayName || ""));
     });
-  }, [menus]);
+  }, [allMenus]);
+
+  const sortedTreeMenus = useMemo(() => {
+    return [...tree].sort((a, b) => {
+      const oa = Number.isFinite(a.orderKey) ? a.orderKey : Number.MAX_SAFE_INTEGER;
+      const ob = Number.isFinite(b.orderKey) ? b.orderKey : Number.MAX_SAFE_INTEGER;
+      if (oa !== ob) return oa - ob;
+      return String(a.displayName || "").localeCompare(String(b.displayName || ""));
+    });
+  }, [tree]);
 
   /* -----------------------------
-   * Initial load: roles, menus, tasks
+   * Initial load
    * --------------------------- */
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
+        setLoading((p) => ({ ...p, init: true }));
         setError("");
         setMessage("");
-        setLoading((p) => ({ ...p, roles: true, menus: true, tasks: true }));
 
-        const [r, m, t] = await Promise.all([
-          fetchRoles(),
+        const [d, u, m] = await Promise.all([
+          fetchDepartments(),
+          fetchUsers(),
           fetchMenus(),
-          fetchAllTasks(),
         ]);
 
         if (cancelled) return;
 
-        setRoles(r);
-        setMenus(m);
-        setTasksByMenu(groupTasksByMenu(t));
+        setDepartments(d);
+        setUsers(u);
+        setAllMenus(m);
 
-        // choose first role by default
-        setSelectedRole((cur) => cur || (r?.[0]?.id ?? ""));
+        setSelectedDept((cur) => cur || (d?.[0]?.deptTypeCode ?? ""));
+        setSelectedUser((cur) => cur || (u?.[0]?.userId ?? ""));
       } catch (e) {
-        if (!cancelled) {
-          setError(e?.response?.data || e?.message || "Failed to load initial data");
-        }
+        if (!cancelled) setError(e?.response?.data || e?.message || "Failed to load");
       } finally {
-        if (!cancelled) {
-          setLoading((p) => ({ ...p, roles: false, menus: false, tasks: false }));
-        }
+        if (!cancelled) setLoading((p) => ({ ...p, init: false }));
       }
     })();
 
@@ -151,173 +164,239 @@ const RoleTaskPage = () => {
   }, []);
 
   /* -----------------------------
-   * Load assignments when role changes
+   * Load dept menu codes when dept changes
    * --------------------------- */
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      if (!selectedRole) {
-        setAssignedKeys(new Set());
+      if (!selectedDept) {
+        setDeptMenuKeys(new Set());
+        setDeptMenusDirty(false);
         return;
       }
 
       try {
+        setLoading((p) => ({ ...p, deptMenus: true }));
         setError("");
         setMessage("");
-        setLoading((p) => ({ ...p, assignments: true }));
 
-        const rows = await fetchRoleAssignments(selectedRole);
+        const codes = await fetchDeptMenuCodes(selectedDept);
         if (cancelled) return;
 
-        const next = new Set(
-          (rows || []).map((x) => `${x.menuCode}::${x.activityCode}`)
-        );
-        setAssignedKeys(next);
+        setDeptMenuKeys(new Set((codes || []).map(String)));
+        setDeptMenusDirty(false);
       } catch (e) {
-        if (!cancelled) {
-          setAssignedKeys(new Set());
-          setError(e?.response?.data || e?.message || "Failed to load role assignments");
-        }
+        if (!cancelled) setError(e?.response?.data || e?.message || "Failed to load dept menus");
       } finally {
-        if (!cancelled) {
-          setLoading((p) => ({ ...p, assignments: false }));
-        }
+        if (!cancelled) setLoading((p) => ({ ...p, deptMenus: false }));
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [selectedRole]);
+  }, [selectedDept]);
 
   /* -----------------------------
-   * UI Handlers
+   * Load tree when dept+user changes
    * --------------------------- */
+  useEffect(() => {
+    let cancelled = false;
 
-  const handleSelectRole = (roleCode) => {
-    setSelectedRole(roleCode);
-    setMessage("");
-  };
-
-  const handleToggle = async (menuCode, activityCode) => {
-    if (!selectedRole) return;
-
-    const key = `${menuCode}::${activityCode}`;
-    const isChecked = assignedKeys.has(key);
-
-    // optimistic UI
-    const next = new Set(assignedKeys);
-    if (isChecked) next.delete(key);
-    else next.add(key);
-    setAssignedKeys(next);
-
-    try {
-      setError("");
-      setLoading((p) => ({ ...p, saving: true }));
-
-      if (isChecked) {
-        // delete mapping
-        await deleteAssignment({
-          userRoleCode: selectedRole,
-          menuCode,
-          activityCode,
-        });
-      } else {
-        // create mapping
-        await createAssignment({
-          userRoleCode: selectedRole,
-          menuCode,
-          activityCode,
-        });
+    (async () => {
+      if (!selectedDept || !selectedUser) {
+        setTree([]);
+        setSelectedKeys(new Set());
+        setTasksDirty(false);
+        return;
       }
 
-      setMessage("Saved");
+      try {
+        setLoading((p) => ({ ...p, tree: true }));
+        setError("");
+        setMessage("");
+
+        const data = await fetchDeptUserTree(selectedDept, selectedUser);
+        if (cancelled) return;
+
+        setTree(data);
+
+        const next = new Set();
+        for (const m of data) {
+          for (const t of m.tasks || []) {
+            if (t.assigned) next.add(`${m.menuCode}::${t.activityCode}`);
+          }
+        }
+        setSelectedKeys(next);
+        setTasksDirty(false);
+      } catch (e) {
+        if (!cancelled) setError(e?.response?.data || e?.message || "Failed to load tasks");
+      } finally {
+        if (!cancelled) setLoading((p) => ({ ...p, tree: false }));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDept, selectedUser]);
+
+  /* -----------------------------
+   * Dept menu checkbox toggle
+   * --------------------------- */
+  const toggleDeptMenu = (menuCode) => {
+    setDeptMenuKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(menuCode)) next.delete(menuCode);
+      else next.add(menuCode);
+      return next;
+    });
+    setDeptMenusDirty(true);
+  };
+
+  const handleSaveDeptMenus = async () => {
+    if (!selectedDept) return;
+
+    const ok = typeof window !== "undefined"
+      ? window.confirm("Save Department Menus?")
+      : true;
+    if (!ok) return;
+
+    try {
+      setLoading((p) => ({ ...p, savingDeptMenus: true }));
+      setError("");
+      setMessage("");
+
+      const menuCodes = Array.from(deptMenuKeys);
+      await saveDeptMenus(selectedDept, menuCodes);
+
+      setDeptMenusDirty(false);
+      setMessage("Department menus saved.");
+      setTimeout(() => setMessage(""), 1500);
+
+      // Refresh tree because menus changed
+      if (selectedUser) {
+        const data = await fetchDeptUserTree(selectedDept, selectedUser);
+        setTree(data);
+        const next = new Set();
+        for (const m of data) {
+          for (const t of m.tasks || []) {
+            if (t.assigned) next.add(`${m.menuCode}::${t.activityCode}`);
+          }
+        }
+        setSelectedKeys(next);
+        setTasksDirty(false);
+      }
+    } catch (e) {
+      setError(toErrorText(e) || "Save dept menus failed");
+      console.log("saveDeptMenus error:", e?.response?.status, e?.response?.data);
+    } finally {
+      setLoading((p) => ({ ...p, savingDeptMenus: false }));
+    }
+  };
+
+  /* -----------------------------
+   * Task checkbox toggle (no API)
+   * --------------------------- */
+  const toggleTask = (menuCode, activityCode) => {
+    const key = `${menuCode}::${activityCode}`;
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setTasksDirty(true);
+  };
+
+  /* -----------------------------
+   * Save tasks (only on button)
+   * --------------------------- */
+  const handleSaveTasks = async () => {
+    if (!selectedDept || !selectedUser) return;
+
+    const ok = typeof window !== "undefined"
+      ? window.confirm("Save Task Assignments?")
+      : true;
+    if (!ok) return;
+
+    const items = Array.from(selectedKeys).map((k) => {
+      const [menuCode, activityCode] = k.split("::");
+      return { menuCode, activityCode };
+    });
+
+    try {
+      setLoading((p) => ({ ...p, savingTasks: true }));
+      setError("");
+      setMessage("");
+
+      await saveDeptUserAssignments(selectedUser, {
+        userId: selectedUser,
+        deptTypeCode: selectedDept,
+        items,
+      });
+
+      setTasksDirty(false);
+      setMessage("Tasks saved.");
       setTimeout(() => setMessage(""), 1500);
     } catch (e) {
-      // rollback UI on failure
-      const rollback = new Set(assignedKeys);
-      setAssignedKeys(rollback);
-
       setError(e?.response?.data || e?.message || "Save failed");
     } finally {
-      setLoading((p) => ({ ...p, saving: false }));
+      setLoading((p) => ({ ...p, savingTasks: false }));
     }
   };
 
-  const handleSelectAll = async () => {
-    if (!selectedRole) return;
+  /* -----------------------------
+   * Create dept/user
+   * --------------------------- */
+  const handleCreateDept = async (e) => {
+    e.preventDefault();
+    setDeptMsg("");
 
-    // Build all task keys from tasksByMenu
-    const allKeys = Object.entries(tasksByMenu).flatMap(([menuCode, tasks]) =>
-      (tasks || []).map((t) => `${menuCode}::${t.activityCode}`)
-    );
+    const deptTypeCode = deptForm.deptTypeCode.trim();
+    const name = deptForm.name.trim();
 
-    // Only assign missing keys
-    const missing = allKeys.filter((k) => !assignedKeys.has(k));
-    if (missing.length === 0) return;
-
-    // optimistic
-    const next = new Set(assignedKeys);
-    missing.forEach((k) => next.add(k));
-    setAssignedKeys(next);
+    if (!deptTypeCode || !name) {
+      setDeptMsg("Dept code and name required");
+      return;
+    }
 
     try {
-      setError("");
-      setLoading((p) => ({ ...p, saving: true }));
-
-      // create one-by-one (simple)
-      // (If you want bulk endpoint, we can optimize this)
-      for (const k of missing) {
-        const [menuCode, activityCode] = k.split("::");
-        await createAssignment({ userRoleCode: selectedRole, menuCode, activityCode });
-      }
-
-      setMessage("Saved (Select All)");
-      setTimeout(() => setMessage(""), 1500);
-    } catch (e) {
-      // rollback by re-fetching assignments
-      try {
-        const rows = await fetchRoleAssignments(selectedRole);
-        const rollback = new Set((rows || []).map((x) => `${x.menuCode}::${x.activityCode}`));
-        setAssignedKeys(rollback);
-      } catch {}
-      setError(e?.response?.data || e?.message || "Select All failed");
-    } finally {
-      setLoading((p) => ({ ...p, saving: false }));
+      const created = await createDepartment({ deptTypeCode, name });
+      setDepartments((prev) =>
+        [...prev, created].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      );
+      setSelectedDept(created.deptTypeCode);
+      setDeptForm({ deptTypeCode: "", name: "" });
+      setIsDeptModalOpen(false);
+    } catch (e2) {
+      setDeptMsg(e2?.response?.data || e2?.message || "Create failed");
     }
   };
 
-  const handleClearAll = async () => {
-    if (!selectedRole) return;
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setUserMsg("");
 
-    const current = Array.from(assignedKeys);
-    if (current.length === 0) return;
+    const userId = userForm.userId.trim();
+    const name = userForm.name.trim();
 
-    // optimistic
-    setAssignedKeys(new Set());
+    if (!userId || !name) {
+      setUserMsg("User ID and name required");
+      return;
+    }
 
     try {
-      setError("");
-      setLoading((p) => ({ ...p, saving: true }));
-
-      for (const k of current) {
-        const [menuCode, activityCode] = k.split("::");
-        await deleteAssignment({ userRoleCode: selectedRole, menuCode, activityCode });
-      }
-
-      setMessage("Saved (Clear All)");
-      setTimeout(() => setMessage(""), 1500);
-    } catch (e) {
-      // rollback by re-fetch
-      try {
-        const rows = await fetchRoleAssignments(selectedRole);
-        const rollback = new Set((rows || []).map((x) => `${x.menuCode}::${x.activityCode}`));
-        setAssignedKeys(rollback);
-      } catch {}
-      setError(e?.response?.data || e?.message || "Clear All failed");
-    } finally {
-      setLoading((p) => ({ ...p, saving: false }));
+      const created = await createUser({ userId, name });
+      setUsers((prev) =>
+        [...prev, created].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+      );
+      setSelectedUser(created.userId);
+      setUserForm({ userId: "", name: "" });
+      setIsUserModalOpen(false);
+    } catch (e2) {
+      setUserMsg(e2?.response?.data || e2?.message || "Create failed");
     }
   };
 
@@ -330,153 +409,321 @@ const RoleTaskPage = () => {
         <div className="bg-white border border-blueGray-100 shadow-xl rounded-xl overflow-hidden">
           <header className="px-8 py-6 border-b bg-blueGray-50 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-blueGray-700">Role Task Assignment</h1>
-              <p className="mt-2 text-sm text-blueGray-500">
-                Select a role and assign tasks (saved in DB).
-              </p>
+              <h1 className="text-2xl font-semibold text-blueGray-700">Dept Task Assignment</h1>
+              <p className="mt-2 text-sm text-blueGray-500">Select dept + user, assign menus + tasks, then Save.</p>
             </div>
 
-            <div className="text-xs text-blueGray-500 text-right">
-              <div>Roles: <span className="font-semibold">{roles.length}</span></div>
-              <div>Saving: <span className="font-semibold">{loading.saving ? "Yes" : "No"}</span></div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsDeptModalOpen(true)}
+                className="px-3 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Create Dept
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsUserModalOpen(true)}
+                className="px-3 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Create User
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveDeptMenus}
+                disabled={!selectedDept || loading.savingDeptMenus || !deptMenusDirty}
+                className="px-3 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading.savingDeptMenus ? "Saving..." : "Save Dept Menus"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveTasks}
+                disabled={!selectedDept || !selectedUser || loading.savingTasks || !tasksDirty}
+                className="px-3 py-2 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {loading.savingTasks ? "Saving..." : "Save Tasks"}
+              </button>
             </div>
           </header>
 
           <div className="px-4 py-4 bg-blueGray-50 space-y-6">
-            {error && (
-              <div className="p-3 rounded bg-red-50 text-[12px] text-red-600">
-                {String(error)}
-              </div>
-            )}
+            {error && <div className="p-3 rounded bg-red-50 text-[12px] text-red-600">{String(error)}</div>}
+            {message && <div className="p-2 rounded bg-emerald-50 text-[12px] text-emerald-700">{message}</div>}
 
-            {message && (
-              <div className="p-2 rounded bg-emerald-50 text-[12px] text-emerald-700">
-                {message}
-              </div>
-            )}
-
-            {/* Role selector */}
             <section className="bg-white border rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold text-blueGray-700 mb-3">Select Role</h2>
-
+              <h2 className="text-lg font-semibold text-blueGray-700 mb-3">Select Department</h2>
               <select
-                value={selectedRole}
-                onChange={(e) => handleSelectRole(e.target.value)}
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
                 className="px-3 py-2 w-full max-w-md border rounded bg-white text-blueGray-700"
-                disabled={loading.roles}
+                disabled={loading.init}
               >
-                <option value="">-- Select Role --</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({r.id})
+                <option value="">-- Select Dept --</option>
+                {departments.map((d) => (
+                  <option key={d.deptTypeCode} value={d.deptTypeCode}>
+                    {d.name} ({d.deptTypeCode})
                   </option>
                 ))}
               </select>
+            </section>
 
-              {(loading.roles || loading.assignments) && (
-                <p className="mt-2 text-[12px] text-blueGray-400">
-                  {loading.roles ? "Loading roles..." : "Loading assignments..."}
-                </p>
+            {/* ✅ NEW: Department Menus assignment */}
+            <section className="bg-white border rounded-lg shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-blueGray-700">Department Menus</h2>
+                <span className="text-xs text-blueGray-500">
+                  {loading.deptMenus ? "Loading..." : `${deptMenuKeys.size} selected`}
+                </span>
+              </div>
+
+              {!selectedDept && (
+                <div className="p-3 rounded bg-blue-50 text-sm text-blue-600">
+                  Select a department to assign menus.
+                </div>
+              )}
+
+              {selectedDept && (
+                <div className="border border-blueGray-100 rounded-lg divide-y">
+                  {sortedAllMenus.map((m) => {
+                    const checked = deptMenuKeys.has(m.menuCode);
+                    return (
+                      <label key={m.menuCode} className="flex items-center gap-2 px-3 py-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleDeptMenu(m.menuCode)}
+                          disabled={loading.deptMenus || loading.savingDeptMenus}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-blueGray-700 text-[13px]">
+                            {m.displayName} <span className="text-[11px] text-blueGray-400">({m.menuCode})</span>
+                          </span>
+                          {m.description && (
+                            <span className="text-[11px] text-blueGray-400">{m.description}</span>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
               )}
             </section>
 
-            {/* Assign tasks */}
             <section className="bg-white border rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-blueGray-700">Assign Tasks</h2>
+              <h2 className="text-lg font-semibold text-blueGray-700 mb-3">Select User</h2>
+              <select
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                className="px-3 py-2 w-full max-w-md border rounded bg-white text-blueGray-700"
+                disabled={loading.init}
+              >
+                <option value="">-- Select User --</option>
+                {users.map((u) => (
+                  <option key={u.userId} value={u.userId}>
+                    {u.name} ({u.userId})
+                  </option>
+                ))}
+              </select>
+            </section>
 
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSelectAll}
-                    disabled={!selectedRole || loading.saving}
-                    className="px-3 py-1 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClearAll}
-                    disabled={!selectedRole || loading.saving}
-                    className="px-3 py-1 text-xs font-semibold rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
+            <section className="bg-white border rounded-lg shadow-sm p-4">
+              <h2 className="text-lg font-semibold text-blueGray-700 mb-3">Menus & Tasks</h2>
 
-              {!selectedRole && (
+              {(!selectedDept || !selectedUser) && (
                 <div className="p-3 rounded bg-blue-50 text-sm text-blue-600">
-                  Select a role to manage task assignments.
+                  Select both department and user.
                 </div>
               )}
 
-              {selectedRole && (
+              {selectedDept && selectedUser && (
                 <div className="border border-blueGray-100 rounded-lg">
-                  {sortedMenus.length === 0 && (
+                  {loading.tree && <div className="p-3 text-sm text-blueGray-400">Loading...</div>}
+
+                  {!loading.tree && sortedTreeMenus.length === 0 && (
                     <div className="p-3 text-sm text-blueGray-400">
-                      No menus found.
+                      No menus found for this department. (Assign menus above then Save Dept Menus)
                     </div>
                   )}
 
-                  {sortedMenus.map((menu) => {
-                    const tasks = tasksByMenu[menu.menuCode] || [];
-                    return (
-                      <div key={menu.menuCode} className="border-b last:border-b-0">
-                        <div className="px-3 py-2 bg-slate-50">
-                          <p className="text-sm font-semibold text-blueGray-700">
-                            {menu.displayName}{" "}
-                            <span className="text-xs text-blueGray-400">
-                              {menu.menuCode}
-                            </span>
-                          </p>
-                        </div>
-
-                        {tasks.length === 0 && (
-                          <div className="p-3 text-sm text-blueGray-400">
-                            No tasks under this menu.
-                          </div>
-                        )}
-
-                        {tasks.map((task) => {
-                          const key = `${menu.menuCode}::${task.activityCode}`;
-                          const checked = assignedKeys.has(key);
-                          return (
-                            <label
-                              key={key}
-                              className="flex items-center justify-between px-3 py-2 text-sm border-t"
-                            >
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  disabled={loading.saving}
-                                  onChange={() => handleToggle(menu.menuCode, task.activityCode)}
-                                  className="h-4 w-4"
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-blueGray-700 text-[13px]">
-                                    {task.activityName || task.activityCode}
-                                  </span>
-                                  <span className="text-[11px] text-blueGray-400">
-                                    {task.activityCode} {task.page ? `— ${task.page}` : ""}
-                                  </span>
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
+                  {sortedTreeMenus.map((menu) => (
+                    <div key={menu.menuCode} className="border-b last:border-b-0">
+                      <div className="px-3 py-2 bg-slate-50">
+                        <p className="text-sm font-semibold text-blueGray-700">
+                          {menu.displayName}{" "}
+                          <span className="text-xs text-blueGray-400">{menu.menuCode}</span>
+                        </p>
                       </div>
-                    );
-                  })}
+
+                      {(menu.tasks || []).map((task) => {
+                        const key = `${menu.menuCode}::${task.activityCode}`;
+                        const checked = selectedKeys.has(key);
+                        return (
+                          <label key={key} className="flex items-center gap-2 px-3 py-2 text-sm border-t">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={loading.savingTasks}
+                              onChange={() => toggleTask(menu.menuCode, task.activityCode)}
+                              className="h-4 w-4"
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-blueGray-700 text-[13px]">
+                                {task.activityName || task.activityCode}
+                              </span>
+                              <span className="text-[11px] text-blueGray-400">
+                                {task.activityCode} {task.page ? `— ${task.page}` : ""}
+                              </span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               )}
             </section>
           </div>
         </div>
       </div>
+
+      {/* Create Dept Modal */}
+      {isDeptModalOpen && (
+        <>
+          <div
+            onClick={() => setIsDeptModalOpen(false)}
+            style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 9998 }}
+          />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 9999,
+              width: "100%",
+              maxWidth: "640px",
+              background: "white",
+              borderRadius: "12px",
+              boxShadow: "0 20px 40px rgba(15, 23, 42, 0.35)",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            <div className="flex items-center justify-between px-6 py-4 bg-blueGray-50 border-b">
+              <h2 className="text-lg font-bold text-blueGray-700">Create Department</h2>
+              <button
+                type="button"
+                onClick={() => setIsDeptModalOpen(false)}
+                className="text-blueGray-400 hover:text-blueGray-600 text-xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <form className="space-y-4" onSubmit={handleCreateDept}>
+                <label className="block text-sm font-medium text-blueGray-600">
+                  Dept Code *
+                  <input
+                    value={deptForm.deptTypeCode}
+                    onChange={(e) => setDeptForm((p) => ({ ...p, deptTypeCode: e.target.value }))}
+                    className="mt-1 px-3 py-2 w-full border rounded-md"
+                  />
+                </label>
+
+                <label className="block text-sm font-medium text-blueGray-600">
+                  Name *
+                  <input
+                    value={deptForm.name}
+                    onChange={(e) => setDeptForm((p) => ({ ...p, name: e.target.value }))}
+                    className="mt-1 px-3 py-2 w-full border rounded-md"
+                  />
+                </label>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">
+                    Create
+                  </button>
+                  {deptMsg && <span className="text-xs text-red-600">{deptMsg}</span>}
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Create User Modal */}
+      {isUserModalOpen && (
+        <>
+          <div
+            onClick={() => setIsUserModalOpen(false)}
+            style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.45)", zIndex: 9998 }}
+          />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 9999,
+              width: "100%",
+              maxWidth: "640px",
+              background: "white",
+              borderRadius: "12px",
+              boxShadow: "0 20px 40px rgba(15, 23, 42, 0.35)",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            <div className="flex items-center justify-between px-6 py-4 bg-blueGray-50 border-b">
+              <h2 className="text-lg font-bold text-blueGray-700">Create User</h2>
+              <button
+                type="button"
+                onClick={() => setIsUserModalOpen(false)}
+                className="text-blueGray-400 hover:text-blueGray-600 text-xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <form className="space-y-4" onSubmit={handleCreateUser}>
+                <label className="block text-sm font-medium text-blueGray-600">
+                  User ID *
+                  <input
+                    value={userForm.userId}
+                    onChange={(e) => setUserForm((p) => ({ ...p, userId: e.target.value }))}
+                    className="mt-1 px-3 py-2 w-full border rounded-md"
+                  />
+                </label>
+
+                <label className="block text-sm font-medium text-blueGray-600">
+                  Name *
+                  <input
+                    value={userForm.name}
+                    onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))}
+                    className="mt-1 px-3 py-2 w-full border rounded-md"
+                  />
+                </label>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">
+                    Create
+                  </button>
+                  {userMsg && <span className="text-xs text-red-600">{userMsg}</span>}
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
-export default RoleTaskPage;
+export default DeptTaskAssignPage;
