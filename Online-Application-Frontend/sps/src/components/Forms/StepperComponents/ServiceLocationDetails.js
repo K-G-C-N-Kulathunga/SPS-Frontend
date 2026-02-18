@@ -245,14 +245,14 @@ const ServiceLocationDetails = ({
         // When checkbox is selected, copy customer details to form data
         setFormData({
           ...formData,
-          serviceStreetAddress: customerData.streetAddress, // Use customerData prop
-          serviceSuburb: customerData.suburb,
+          serviceStreetAddress: customerData.suburb, // suburb = Street Name
+          serviceSuburb: customerData.streetAddress, // streetAddress = Home/Company No
           serviceCity: customerData.city,
           servicePostalCode: customerData.postalCode,
         });
         setManualData({
-          serviceStreetAddress: customerData.streetAddress,
-          serviceSuburb: customerData.suburb,
+          serviceStreetAddress: customerData.suburb, // suburb = Street Name
+          serviceSuburb: customerData.streetAddress, // streetAddress = Home/Company No
           serviceCity: customerData.city,
           servicePostalCode: customerData.postalCode,
         });
