@@ -182,7 +182,7 @@ const ServiceLocationDetails = ({
 
     const houseNoRegex = /^[A-Za-z0-9\s]{2,100}$/; // letters, numbers and spaces for house/building no
     const addressRegex = /^[A-Za-z\s]{2,100}$/; // only letters and spaces for street/city
-    const postalRegex = /^[0-9]{5}$/; // exactly 5 digits
+    const postalRegex = /^[0-9]{2}$/; // exactly 2 digits
 
     if (!value.trim()) {
       errorMessage = "This field is required";
@@ -279,14 +279,13 @@ const ServiceLocationDetails = ({
 
   // Sync manualData changes to formData
   useEffect(() => {
-    setFormData({
-      ...formData,
+    setFormData((prevFormData) => ({
+      ...prevFormData,
       serviceStreetAddress: manualData.serviceStreetAddress,
       serviceSuburb: manualData.serviceSuburb,
       serviceCity: manualData.serviceCity,
       servicePostalCode: manualData.servicePostalCode,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }));
   }, [manualData]);
 
 

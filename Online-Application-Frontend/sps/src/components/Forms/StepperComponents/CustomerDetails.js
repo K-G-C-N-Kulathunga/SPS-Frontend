@@ -188,16 +188,15 @@ const validateNameField = (fieldName, value) => {
 
   return errorMessage === "";
 };
-const capitalizeWords = (value) => {
-  return value
-    .replace(/\s{2,}/g, " ");   // prevent double spaces
+const removeDoubleSpaces = (value) => {
+  return value.replace(/\s{2,}/g, " ");   // prevent double spaces
 };
 
 const handleNameChange = (e) => {
   const { name, value } = e.target;
 
   // Clean up value (prevent double spaces)
-  let formattedValue = capitalizeWords(value);
+  let formattedValue = removeDoubleSpaces(value);
 
   // Character filtering
   if (formData.personalCorporate === "COR") {
@@ -263,8 +262,11 @@ const handleAddressChange = (e) => {
 
   let formattedValue = value.replace(/\s{2,}/g, " "); // prevent double spaces
 
-  // Only allow numbers for postal code
-  if (name === "postalCode" && !/^[0-9]{5}$/.test(formattedValue)) return;
+  // Only allow numbers for postal code (allow partial input, max 5 digits)
+  if (name === "postalCode") {
+    if (!/^[0-9]*$/.test(formattedValue)) return;
+    if (formattedValue.length > 5) return;
+  }
 
   // Allow letters, numbers and spaces for streetAddress (company/house no)
   if (name === "streetAddress" && !/^[A-Za-z0-9\s]*$/.test(formattedValue)) return;

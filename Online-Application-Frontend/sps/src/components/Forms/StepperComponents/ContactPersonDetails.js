@@ -172,10 +172,10 @@ const ContactPersonDetails = ({
       if (!/^[A-Za-z\s]*$/.test(filteredValue)) return; // Only letters and spaces
     }
 
-    // Filter address field (only letters, numbers, spaces and common address characters)
+    // Filter address field (only letters, numbers and spaces)
     if (field === "contactAddress") {
       filteredValue = value.replace(/\s{2,}/g, " "); // prevent double spaces
-      if (!/^[A-Za-z0-9\s,.\-/#]*$/.test(filteredValue)) return; // Only alphanumeric, spaces, and ,.-/#
+      if (!/^[A-Za-z0-9\s]*$/.test(filteredValue)) return; // Only alphanumeric characters and spaces
       if (filteredValue.length > 200) return; // Max 200 characters
     }
 
