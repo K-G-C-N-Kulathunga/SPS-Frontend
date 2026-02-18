@@ -113,18 +113,178 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
 
   // Email validation handler
   const handleEmailChange = (e) => {
-    const value = e.target.value;
+    let value = e.target.value;
+    
+    // Only allow valid email characters: letters, numbers, @, ., _, -
+    if (!/^[A-Za-z0-9@._-]*$/.test(value)) {
+      return; // reject invalid characters
+    }
+    
     setFormData((prev) => ({
       ...prev,
       email: value,
     }));
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    const emailRegex = /^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (value && !emailRegex.test(value)) {
       setEmailError("Invalid email address");
     } else {
       setEmailError("");
     }
   };
+// Name validation state 
+  const [nameErrors, setNameErrors] = useState({
+  fullName: "",
+  firstName: "",
+  lastName: "",
+});
+
+// Address validation state
+const [addressErrors, setAddressErrors] = useState({
+  streetAddress: "",
+  suburb: "",
+  city: "",
+  postalCode: "",
+});
+
+const validateNameField = (fieldName, value) => {
+  let errorMessage = "";
+
+  const personalFullNameRegex =
+    /^[A-Za-z]+(?:\.?[A-Za-z]+)*(?: [A-Za-z]+(?:\.?[A-Za-z]+)*)*$/;
+
+  const corporateNameRegex =
+    /^[A-Za-z0-9&().,\- ]{2,100}$/;
+
+  const singleNameRegex = /^[A-Za-z]{2,30}$/;
+
+  if (!value.trim()) {
+    errorMessage = "This field is required";
+  } else {
+    if (formData.personalCorporate === "COR") {
+      if (!corporateNameRegex.test(value)) {
+        errorMessage =
+          "Corporate name can include letters, numbers & symbols (& . , -)";
+      }
+    } else {
+      if (fieldName === "fullName" && !personalFullNameRegex.test(value)) {
+        errorMessage =
+          "Only letters, spaces and initials allowed (e.g., A.B. PERERA)";
+      }
+
+      if (
+        (fieldName === "firstName" || fieldName === "lastName") &&
+        !singleNameRegex.test(value)
+      ) {
+        errorMessage = "Only letters allowed (min 2 characters)";
+      }
+    }
+  }
+
+  setNameErrors((prev) => ({
+    ...prev,
+    [fieldName]: errorMessage,
+  }));
+
+  return errorMessage === "";
+};
+const capitalizeWords = (value) => {
+  return value
+    .replace(/\s{2,}/g, " ");   // prevent double spaces
+};
+
+const handleNameChange = (e) => {
+  const { name, value } = e.target;
+
+  // Clean up value (prevent double spaces)
+  let formattedValue = capitalizeWords(value);
+
+  // Character filtering
+  if (formData.personalCorporate === "COR") {
+    if (!/^[A-Za-z0-9&().,\- ]*$/.test(formattedValue)) return;
+  } else {
+    if (name === "fullName" && !/^[A-Za-z.\s]*$/.test(formattedValue)) return;
+
+    if (
+      (name === "firstName" || name === "lastName") &&
+      !/^[A-Za-z]*$/.test(formattedValue)
+    )
+      return;
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: formattedValue,
+  }));
+
+  validateNameField(name, formattedValue);
+};
+
+const validateAddressField = (fieldName, value) => {
+  let errorMessage = "";
+
+  const streetAddressRegex = /^[A-Za-z0-9\s]{2,100}$/; // letters, numbers and spaces for company/house no
+  const addressRegex = /^[A-Za-z\s]{2,100}$/; // only letters and spaces for suburb/city
+  const postalRegex = /^[0-9]{5}$/; // exactly 5 digits
+
+  if (!value.trim()) {
+    errorMessage = "This field is required";
+  } else {
+    if (fieldName === "streetAddress") {
+      if (!streetAddressRegex.test(value)) {
+        errorMessage =
+          "Must be 2-100 characters. Letters and numbers allowed (e.g., No 24).";
+      }
+    }
+
+    if (fieldName === "suburb" || fieldName === "city") {
+      if (!addressRegex.test(value)) {
+        errorMessage =
+          "Must be 2-100 characters. Only letters allowed.";
+      }
+    }
+
+    if (fieldName === "postalCode") {
+      if (!postalRegex.test(value)) {
+        errorMessage = "Postal code must be exactly 5 digits";
+      }
+    }
+  }
+
+  setAddressErrors((prev) => ({
+    ...prev,
+    [fieldName]: errorMessage,
+  }));
+
+  return errorMessage === "";
+};
+const handleAddressChange = (e) => {
+  const { name, value } = e.target;
+
+  let formattedValue = value.replace(/\s{2,}/g, " "); // prevent double spaces
+
+  // Only allow numbers for postal code
+  if (name === "postalCode" && !/^[0-9]{5}$/.test(formattedValue)) return;
+
+  // Allow letters, numbers and spaces for streetAddress (company/house no)
+  if (name === "streetAddress" && !/^[A-Za-z0-9\s]*$/.test(formattedValue)) return;
+
+  // Only allow letters and spaces for suburb and city
+  if ((name === "suburb" || name === "city") && 
+      !/^[A-Za-z\s]*$/.test(formattedValue)) return;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: formattedValue,
+  }));
+
+  validateAddressField(name, formattedValue);
+};
+
+
+
+
+
 
   return (
     <div className="dashboard-card">
@@ -212,6 +372,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
                 id="idNo"
                 name="idNo"
                 className="form-input"
+                placeholder="123456789V or 200012345678"
                 required
                 value={formData.idNo}
                 onChange={handleIdValidation}
@@ -243,12 +404,17 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
             id="fullName"
             name="fullName"
             className="form-input"
-            onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+            placeholder="A.B. Perera"
+            onChange={handleNameChange}
             required
             value={formData.fullName}
-            onChange={handleChange}
             readOnly={customerExists}
           />
+          {nameErrors.fullName && (
+  <div style={{ color: "red", fontSize: "12px" }}>
+    {nameErrors.fullName}
+  </div>
+)}
         </div>
 
         <div className="form-box-inner">
@@ -261,12 +427,17 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="firstName"
               name="firstName"
               className="form-input"
-              onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+              placeholder="John"
               required
               value={formData.firstName}
-              onChange={handleChange}
+              onChange={handleNameChange}
               readOnly={customerExists}
             />
+            {nameErrors.firstName && (
+  <div style={{ color: "red", fontSize: "12px" }}>
+    {nameErrors.firstName}
+  </div>
+)}
           </div>
 
           <div className="form-group">
@@ -278,12 +449,17 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="lastName"
               name="lastName"
               className="form-input"
-              onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+              placeholder="Perera"
               required
               value={formData.lastName}
-              onChange={handleChange}
+              onChange={handleNameChange}
               readOnly={customerExists}
             />
+            {nameErrors.lastName && (
+  <div style={{ color: "red", fontSize: "12px" }}>
+    {nameErrors.lastName}
+  </div>
+)}
           </div>
         </div>
 
@@ -297,11 +473,18 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="streetAddress"
               name="streetAddress"
               className="form-input"
+              placeholder="No 24"
               value={formData.streetAddress}
-              onChange={handleChange}
+              onChange={handleAddressChange}
+              onBlur={(e) => validateAddressField("streetAddress", e.target.value)}
               readOnly={customerExists}
               required
             />
+            {addressErrors.streetAddress && (
+              <div style={{ color: "red", fontSize: "12px" }}>
+                {addressErrors.streetAddress}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -313,11 +496,18 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="suburb"
               name="suburb"
               className="form-input"
+              placeholder="Main Street"
               value={formData.suburb}
-              onChange={handleChange}
+              onChange={handleAddressChange}
+              onBlur={(e) => validateAddressField("suburb", e.target.value)}
               readOnly={customerExists}
               required
             />
+             {addressErrors.suburb && (
+    <div style={{ color: "red", fontSize: "12px" }}>
+      {addressErrors.suburb}
+    </div>
+  )}
           </div>
         </div>
 
@@ -331,15 +521,22 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="city"
               name="city"
               className="form-input"
+              placeholder="Colombo"
               value={formData.city}
-              onChange={handleChange}
+              onChange={handleAddressChange}
+              onBlur={(e) => validateAddressField("city", e.target.value)}
               readOnly={customerExists}
               required
             />
+             {addressErrors.city && (
+    <div style={{ color: "red", fontSize: "12px" }}>
+      {addressErrors.city}
+    </div>
+  )}
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="postalCode">
+            <label className="form-label required" htmlFor="postalCode">
               Postal Code:
             </label>
             <input
@@ -347,9 +544,17 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="postalCode"
               name="postalCode"
               className="form-input"
+              placeholder="00100"
               value={formData.postalCode}
-              onChange={handleChange}
+              onChange={handleAddressChange}
+              onBlur={(e) => validateAddressField("postalCode", e.target.value)}
+              required
             />
+            {addressErrors.postalCode && (
+    <div style={{ color: "red", fontSize: "12px" }}>
+      {addressErrors.postalCode}
+    </div>
+  )}
           </div>
         </div>
 
@@ -408,6 +613,7 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
               id="email"
               name="email"
               className="form-input-email"
+              placeholder="example@email.com"
               value={formData.email}
               onChange={handleEmailChange}
             />

@@ -253,6 +253,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             title="Enter up to 10 digits"
             value={formData.preAccountNo || ""}
             onChange={(e) => setFormData({ ...formData, preAccountNo: e.target.value })}
+            onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
           />
         </div>
 

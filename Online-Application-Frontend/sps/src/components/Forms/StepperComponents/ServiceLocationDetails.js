@@ -63,6 +63,14 @@ const ServiceLocationDetails = ({
     servicePostalCode: formData.servicePostalCode || "",
   });
 
+  // Address validation state
+  const [addressErrors, setAddressErrors] = useState({
+    serviceStreetAddress: "",
+    serviceSuburb: "",
+    serviceCity: "",
+    servicePostalCode: "",
+  });
+
   // Create local state to track form values
   // const [localFormData, setLocalFormData] = useState({
   //   serviceStreetAddress: formData?.serviceStreetAddress || "",
@@ -168,6 +176,66 @@ const ServiceLocationDetails = ({
 //     }
 //   };
 
+  // Address field validation
+  const validateAddressField = (fieldName, value) => {
+    let errorMessage = "";
+
+    const houseNoRegex = /^[A-Za-z0-9\s]{2,100}$/; // letters, numbers and spaces for house/building no
+    const addressRegex = /^[A-Za-z\s]{2,100}$/; // only letters and spaces for street/city
+    const postalRegex = /^[0-9]{5}$/; // exactly 5 digits
+
+    if (!value.trim()) {
+      errorMessage = "This field is required";
+    } else {
+      if (fieldName === "serviceSuburb") {
+        if (!houseNoRegex.test(value)) {
+          errorMessage =
+            "Must be 2-100 characters. Letters and numbers allowed (e.g., No 24).";
+        }
+      }
+
+      if (fieldName === "serviceStreetAddress" || fieldName === "serviceCity") {
+        if (!addressRegex.test(value)) {
+          errorMessage =
+            "Must be 2-100 characters. Only letters allowed.";
+        }
+      }
+
+      if (fieldName === "servicePostalCode") {
+        if (!postalRegex.test(value)) {
+          errorMessage = "Postal code must be exactly 5 digits";
+        }
+      }
+    }
+
+    setAddressErrors((prev) => ({
+      ...prev,
+      [fieldName]: errorMessage,
+    }));
+
+    return errorMessage === "";
+  };
+
+  // Address field change handler
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+
+    let formattedValue = value.replace(/\s{2,}/g, " "); // prevent double spaces
+
+    // Only allow numbers for postal code
+    if (name === "servicePostalCode" && !/^[0-9]*$/.test(formattedValue)) return;
+
+    // Allow letters, numbers and spaces for serviceSuburb (house/building no)
+    if (name === "serviceSuburb" && !/^[A-Za-z0-9\s]*$/.test(formattedValue)) return;
+
+    // Only allow letters and spaces for street name and city
+    if ((name === "serviceStreetAddress" || name === "serviceCity") && 
+        !/^[A-Za-z\s]*$/.test(formattedValue)) return;
+
+    setManualData({ ...manualData, [name]: formattedValue });
+    validateAddressField(name, formattedValue);
+  };
+
 
   const handleSameAsCustomerChange = () => {
     setIsSelected((prevState) => {
@@ -208,6 +276,18 @@ const ServiceLocationDetails = ({
       return newState;
     });
   };
+
+  // Sync manualData changes to formData
+  useEffect(() => {
+    setFormData({
+      ...formData,
+      serviceStreetAddress: manualData.serviceStreetAddress,
+      serviceSuburb: manualData.serviceSuburb,
+      serviceCity: manualData.serviceCity,
+      servicePostalCode: manualData.servicePostalCode,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualData]);
 
 
   useEffect(() => {
@@ -397,6 +477,7 @@ const ServiceLocationDetails = ({
                 className="form-input"
                 value={formData.neighboursAccNo || ""}
                 onChange={handleChange}
+                onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
                 maxLength={10}
                 inputMode="numeric"
             />
@@ -432,16 +513,17 @@ const ServiceLocationDetails = ({
                   id="serviceSuburb"
                   name="serviceSuburb"
                   className="form-input"
-
-
-                  // value={localFormData.serviceSuburb}
-                  // onChange={handleLocalFieldChange}
-                  // required
+                  placeholder="No 24"
                   value={manualData.serviceSuburb}
-                  onChange={(e) =>
-                      setManualData({ ...manualData, serviceSuburb: e.target.value })
-                  }
+                  onChange={handleAddressChange}
+                  onBlur={(e) => validateAddressField("serviceSuburb", e.target.value)}
+                  required
               />
+              {addressErrors.serviceSuburb && (
+                <div style={{ color: "red", fontSize: "12px" }}>
+                  {addressErrors.serviceSuburb}
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label required">Street Name:</label>
@@ -450,14 +532,17 @@ const ServiceLocationDetails = ({
                   id="serviceStreetAddress"
                   name="serviceStreetAddress"
                   className="form-input"
-                  // value={localFormData.serviceStreetAddress}
-                  // onChange={handleLocalFieldChange}
-                  // required
+                  placeholder="Main Street"
                   value={manualData.serviceStreetAddress}
-                  onChange={(e) =>
-                      setManualData({ ...manualData, serviceStreetAddress: e.target.value })
-                  }
+                  onChange={handleAddressChange}
+                  onBlur={(e) => validateAddressField("serviceStreetAddress", e.target.value)}
+                  required
               />
+              {addressErrors.serviceStreetAddress && (
+                <div style={{ color: "red", fontSize: "12px" }}>
+                  {addressErrors.serviceStreetAddress}
+                </div>
+              )}
             </div>
           </div>
 
@@ -470,31 +555,37 @@ const ServiceLocationDetails = ({
                   id="serviceCity"
                   name="serviceCity"
                   className="form-input"
-                  // value={localFormData.serviceCity}
-                  // onChange={handleLocalFieldChange}
-                  // required
+                  placeholder="Colombo"
                   value={manualData.serviceCity}
-                  onChange={(e) =>
-                      setManualData({ ...manualData, serviceCity: e.target.value })
-                  }
+                  onChange={handleAddressChange}
+                  onBlur={(e) => validateAddressField("serviceCity", e.target.value)}
+                  required
               />
+              {addressErrors.serviceCity && (
+                <div style={{ color: "red", fontSize: "12px" }}>
+                  {addressErrors.serviceCity}
+                </div>
+              )}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Postal Code:</label>
+              <label className="form-label required">Postal Code:</label>
               <input
                   type="text"
                   id="servicePostalCode"
                   name="servicePostalCode"
                   className="form-input"
-                  // value={localFormData.servicePostalCode}
-                  // onChange={handleLocalFieldChange}
-                  // required
+                  placeholder="00100"
                   value={manualData.servicePostalCode}
-                  onChange={(e) =>
-                      setManualData({ ...manualData, servicePostalCode: e.target.value })
-                  }
+                  onChange={handleAddressChange}
+                  onBlur={(e) => validateAddressField("servicePostalCode", e.target.value)}
+                  required
               />
+              {addressErrors.servicePostalCode && (
+                <div style={{ color: "red", fontSize: "12px" }}>
+                  {addressErrors.servicePostalCode}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -511,7 +602,8 @@ const ServiceLocationDetails = ({
                   className="form-input"
                   value={formData?.assessmentNo || ""}
                   onChange={handleChange}
-                  maxLength={10}
+                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
+                  maxLength={6}
                   inputMode="numeric"
               />
             </div>
