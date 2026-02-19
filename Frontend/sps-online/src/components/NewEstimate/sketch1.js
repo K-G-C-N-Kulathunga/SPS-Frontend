@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-const Sketch1 = () => {
-  const [formData, setFormData] = useState({
-    // Left Side
+const Sketch1 = ({ formData, setFormData }) => {
+  const costItems = formData.costItems || []; // ✅ get from formData
+
+  const [formDataLeft, setFormDataLeft] = useState({
+    // Left side fields (unchanged)
     categoryCode: "",
     totalLineLength: "",
     conductorType: "",
@@ -20,72 +22,41 @@ const Sketch1 = () => {
     noPoles: "",
     noStays: "",
     noStruts: "",
-
-    // Right Side
-    fixedCost: "",
-    variableCost: "",
-    subTotal: "",
-    materialCost: "",
-    labourCost: "",
-    overheadCost: "",
-    transportCost: "",
-    conversionCost: "",
-    syaCost: "",
-    mvNetworkDevCost: "",
-    // totalCostNBT: "",
-    nbt: "",
-    totalCostSSCL: "",
-    sscl: "",
-    totalCostVAT: "",
-    vatAmount: "",
-    securityDeposit: "",
-    addSecurityDeposit: "",
   });
 
-  const handleChange = (e) => {
+  const [costValues, setCostValues] = useState({});
+  const prevCodesRef = useRef("");
+
+  // Re-initialize costValues when costItems change
+  useEffect(() => {
+    const currentCodes = costItems.map(item => item.costItemCode).sort().join(',');
+    if (prevCodesRef.current !== currentCodes) {
+      const initial = {};
+      costItems.forEach(item => {
+        initial[item.costItemCode] = "";
+      });
+      setCostValues(initial);
+      prevCodesRef.current = currentCodes;
+    }
+  }, [costItems]);
+
+  const handleLeftChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormDataLeft(prev => ({ ...prev, [name]: value }));
   };
 
-  const fieldStyle = {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "8px",
-  };
-  const labelStyle = {
-    width: "200px",
-    fontWeight: 500,
-    color: "#374151",
-    fontSize: "12px",
-    flexShrink: 0,
-  };
-  const inputStyle = {
-    flex: 1,
-    padding: "4px 8px",
-    fontSize: "12px",
-    borderRadius: "4px",
-    border: "1px solid #d1d5db",
-    background: "#fff",
-    color: "#374151",
-  };
-  const containerStyle = {
-    background: "#ffffffff",
-    padding: "15px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    fontSize: "12px",
-    maxWidth: "1200px",
-    margin: "15px auto",
-  };
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "25px",
+  const handleCostChange = (code, value) => {
+    setCostValues(prev => ({ ...prev, [code]: value }));
   };
 
-  // Label mapping
-  const labelMap = {
-    // Left
+  // Styles (uncharted, keep as before)
+  const fieldStyle = { display: "flex", alignItems: "center", marginBottom: "8px" };
+  const labelStyle = { width: "200px", fontWeight: 500, fontSize: "12px", flexShrink: 0 };
+  const inputStyle = { flex: 1, padding: "4px 8px", fontSize: "12px", borderRadius: "4px", border: "1px solid #d1d5db", background: "#fff", color: "#374151" };
+  const containerStyle = { background: "#ffffffff", padding: "15px", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", fontSize: "12px", maxWidth: "1200px", margin: "15px auto" };
+  const gridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px" };
+
+  const leftLabelMap = {
     categoryCode: "Category Code",
     totalLineLength: "Total Line Length (m)",
     conductorType: "Conductor Type",
@@ -103,103 +74,53 @@ const Sketch1 = () => {
     noPoles: "No. Poles",
     noStays: "No. Stays",
     noStruts: "No. Struts",
-
-    // Right
-    fixedCost: "Fixed Cost",
-    variableCost: "Variable Cost",
-    subTotal: "Sub Total",
-    materialCost: "Material Cost",
-    labourCost: "Labour Cost",
-    overheadCost: "Overhead Cost",
-    transportCost: "Transport Cost",
-    conversionCost: "Conversion Cost",
-    syaCost: "SYA Cost",
-    mvNetworkDevCost: "MV Network Dev Cost",
-    totalCostNBT: "Total Cost for NBT",
-    nbt: "Nation Building Tax (NBT)",
-    totalCostSSCL: "Total Cost for SSCL",
-    sscl: "SSCL",
-    totalCostVAT: "Total Cost for VAT",
-    vatAmount: "VAT Amount",
-    securityDeposit: "Security Deposit",
-    addSecurityDeposit: "Add Security Deposit",
   };
 
-  // Fields in order
   const leftFields = [
-    "categoryCode",
-    "totalLineLength",
-    "conductorType",
-    "conductorLength",
-    "serviceLength",
-    "lengthInsidePremises",
-    "conversion1P3P",
-    "conversion2P3P",
-    "secondCircuitLength",
-    "secondCircuitConductorType",
-    "wiringType",
-    "loopService",
-    "cableType",
-    "spans",
-    "noPoles",
-    "noStays",
-    "noStruts",
-  ];
-
-  const rightFields = [
-    "fixedCost",
-    "variableCost",
-    "subTotal",
-    "materialCost",
-    "labourCost",
-    "overheadCost",
-    "transportCost",
-    "conversionCost",
-    "syaCost",
-    "mvNetworkDevCost",
-    // "totalCostNBT",
-    "nbt",
-    "totalCostSSCL",
-    "sscl",
-    "totalCostVAT",
-    "vatAmount",
-    "securityDeposit",
-    "addSecurityDeposit",
+    "categoryCode", "totalLineLength", "conductorType", "conductorLength",
+    "serviceLength", "lengthInsidePremises", "conversion1P3P", "conversion2P3P",
+    "secondCircuitLength", "secondCircuitConductorType", "wiringType",
+    "loopService", "cableType", "spans", "noPoles", "noStays", "noStruts",
   ];
 
   return (
     <div style={containerStyle}>
       <div style={gridStyle}>
-        {/* Left column */}
+        {/* Left column (hardcoded) */}
         <div>
           {leftFields.map((key) => (
             <div style={fieldStyle} key={key}>
-              <label style={labelStyle}>{labelMap[key]}:</label>
+              <label style={labelStyle}>{leftLabelMap[key]}:</label>
               <input
                 type="text"
                 name={key}
-                value={formData[key]}
-                onChange={handleChange}
+                value={formDataLeft[key]}
+                onChange={handleLeftChange}
                 style={inputStyle}
               />
             </div>
           ))}
         </div>
 
-        {/* Right column */}
+        {/* Right column (dynamic from costItems) */}
         <div>
-          {rightFields.map((key) => (
-            <div style={fieldStyle} key={key}>
-              <label style={labelStyle}>{labelMap[key]}:</label>
+          {costItems.map((item) => (
+            <div style={fieldStyle} key={item.costItemCode}>
+              <label style={labelStyle}>{item.description}:</label>
               <input
                 type="text"
-                name={key}
-                value={formData[key]}
-                onChange={handleChange}
+                value={costValues[item.costItemCode] || ""}
+                onChange={(e) => handleCostChange(item.costItemCode, e.target.value)}
                 style={inputStyle}
+                // placeholder="Enter amount"
               />
             </div>
           ))}
+          {costItems.length === 0 && (
+            <div style={{ color: "#999", textAlign: "center", padding: "20px" }}>
+              No cost items loaded.
+            </div>
+          )}
         </div>
       </div>
     </div>
