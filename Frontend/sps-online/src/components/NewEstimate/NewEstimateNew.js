@@ -1,10 +1,14 @@
 // ApplicationConnectionDetails.js (NewEstimateNew.js)
+
 import React, { useState, useEffect } from "react";
-import { api } from '../../api'; // Adjust the path as necessary
+import { api } from '../../api';
 
 const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
+
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState("");
+  const [estimatedTotalCost, setEstimatedTotalCost] = useState(0);
+
   const [formState, setFormState] = useState({
     estimateNumber: "",
     applicantName: "",
@@ -19,12 +23,12 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
     tariff: "",
   });
 
-  // Fetch all applications on mount
+  // Fetch applications on mount
   useEffect(() => {
     const fetchApplications = async () => {
       try {
         const res = await api.get("/application/recent");
-        setApplications(res.data); // [{ applicationNo }]
+        setApplications(res.data);
       } catch (err) {
         console.error("Error fetching applications:", err);
       }
@@ -32,68 +36,115 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
     fetchApplications();
   }, []);
 
- const handleFetchClick = async () => {
-  if (!selectedApplication) return;
+  // 🔥 Fetch cost items + calculate totals
+  const handleFetchClick = async () => {
+    if (!selectedApplication) return;
 
-  try {
-    const res = await api.get("/cost/by-application", {
-      params: { applicationNo: selectedApplication }
-    });
-    console.log("Fetched cost items (full array):", res.data);
-    const items = res.data; // ✅ array of cost items
+    try {
+      const res = await api.get("/cost/by-application", {
+        params: { applicationNo: selectedApplication }
+      });
 
-    // Store the array in the parent state under the key "costItems"
-    setFormData(prev => ({ ...prev, costItems: items }));
+      // ✅ Add hardcoded amount (for now)
+      const itemsWithAmount = res.data.map((item, index) => ({
+        ...item,
+        amount: (index + 1) * 1000  // Example values: 1000, 2000, 3000...
+      }));
 
-    // Optionally update local formState if you have applicant details
-    // (Currently the API only returns cost items, so leave empty)
-    setFormState({
-      estimateNumber: "",
-      applicantName: "",
-      applicationDate: "",
-      nationalIdNumber: "",
-      neighborsAccountNumber: "",
-      address: "",
-      telNumber: "",
-      phase: "",
-      tariffCategory: "",
-      connectionType: "",
-      tariff: "",
-    });
-  } catch (err) {
-    console.error("Error fetching application details:", err);
-  }
-};
-  // Styles (same as before)
+      // ✅ Group & sum by parentKey
+      const parentTotals = itemsWithAmount.reduce((acc, item) => {
+        const key = item.parentKey;
+
+        if (!acc[key]) {
+          acc[key] = 0;
+        }
+
+        acc[key] += item.amount;
+        return acc;
+      }, {});
+
+      // ✅ Calculate Estimated Total Cost
+      const total = Object.values(parentTotals)
+        .reduce((sum, value) => sum + value, 0);
+
+      setEstimatedTotalCost(total);
+
+      // ✅ Send to parent if needed
+      setFormData(prev => ({
+        ...prev,
+        costItems: itemsWithAmount,
+        parentTotals,
+        estimatedTotalCost: total
+      }));
+
+      console.log("Parent Totals:", parentTotals);
+      console.log("Estimated Total Cost:", total);
+
+    } catch (err) {
+      console.error("Error fetching application details:", err);
+    }
+  };
+
+  // Styles
   const fieldStyle = { display: "flex", alignItems: "center", marginBottom: "8px" };
   const labelStyle = { width: "140px", fontWeight: 500, fontSize: "12px", flexShrink: 0 };
   const inputStyle = { flex: 1, padding: "4px 8px", fontSize: "12px", borderRadius: "4px", border: "1px solid #d1d5db", background: "#f9fafb", color: "#374151" };
   const buttonStyle = { padding: "4px 12px", fontSize: "12px", borderRadius: "4px", background: "#3b82f6", color: "#fff", border: "none", cursor: "pointer", marginLeft: "10px" };
 
   return (
-    <div style={{ background: "#fff", padding: "15px", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", fontSize: "12px", maxWidth: "750px", margin: "0 auto" }}>
-      <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "12px" }}>Application Connection Details</h3>
+    <div style={{
+      background: "#fff",
+      padding: "15px",
+      borderRadius: "8px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      fontSize: "12px",
+      maxWidth: "750px",
+      margin: "0 auto"
+    }}>
 
-      {/* Dropdown + Fetch button */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "15px" }}>
+      <h3 style={{
+        fontSize: "14px",
+        fontWeight: "600",
+        color: "#111827",
+        marginBottom: "12px"
+      }}>
+        Application Connection Details
+      </h3>
+
+      {/* Dropdown + Fetch */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "15px",
+        marginBottom: "15px"
+      }}>
         <div style={{ display: "flex", alignItems: "center" }}>
           <label style={labelStyle}>Application No:</label>
+
           <select
             value={selectedApplication}
             onChange={(e) => setSelectedApplication(e.target.value)}
             style={{ ...inputStyle, background: "#fff", cursor: "pointer" }}
           >
             <option value="">Select Application</option>
-            {applications.map((app) => (
-              <option key={app} value={app}>{app}</option>
+            {applications.map((app, index) => (
+              <option key={index} value={app}>{app}</option>
             ))}
           </select>
-          <button style={buttonStyle} onClick={handleFetchClick}>Fetch</button>
+
+          <button style={buttonStyle} onClick={handleFetchClick}>
+            Fetch
+          </button>
         </div>
       </div>
 
-      {/* Two-column layout for details (same as before) */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+      {/* Details Section */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "15px"
+      }}>
+
         {/* Left column */}
         <div>
           {[
@@ -126,6 +177,22 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
           ))}
         </div>
       </div>
+
+      {/* 🔥 Estimated Total Cost Display */}
+      {estimatedTotalCost > 0 && (
+        <div style={{
+          marginTop: "20px",
+          padding: "10px",
+          background: "#f3f4f6",
+          borderRadius: "6px",
+          fontWeight: "600",
+          fontSize: "14px",
+          textAlign: "right"
+        }}>
+          {/* Estimated Total Cost: Rs. {estimatedTotalCost.toLocaleString()} */}
+        </div>
+      )}
+
     </div>
   );
 };
