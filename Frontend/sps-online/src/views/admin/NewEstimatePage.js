@@ -1,7 +1,7 @@
 // import React, { useState, useEffect, useRef } from "react";
 import React, { useState, useEffect, useRef } from "react";
 import NewEstimateNew from "../../components/NewEstimate/NewEstimateNew";
-import Sketch1 from "../../components/NewEstimate/Sketch1";
+import Sketch1 from "../../components/NewEstimate/sketch1";
 import Sketch2 from "../../components/NewEstimate/sketch2";
 import Sketch3 from "../../components/NewEstimate/sketch3";
 import Sketch4 from "../../components/NewEstimate/sketch4";

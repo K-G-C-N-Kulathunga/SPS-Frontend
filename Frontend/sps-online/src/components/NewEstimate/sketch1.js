@@ -58,7 +58,7 @@ const Sketch1 = ({ formData }) => {
           initial[item.costItemCode] = 0;
         } else {
           initial[item.costItemCode] =
-            hardcodedAmounts[item.costItemCode] || 0;
+            hardcodedAmounts[item.costItemCode] || item.amount;
         }
       });
 
@@ -157,7 +157,7 @@ useEffect(() => {
                 type="text"
                 value={
                   costValues[item.costItemCode] !== undefined
-                    ? costValues[item.costItemCode].toFixed(2)
+                    ? costValues[item.costItemCode].toFixed(5)
                     : ""
                 }
                 style={inputStyle}

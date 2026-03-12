@@ -46,10 +46,21 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
       });
 
       // ✅ Add hardcoded amount (for now)
-      const itemsWithAmount = res.data.map((item, index) => ({
-        ...item,
-        amount: (index + 1) * 1000  // Example values: 1000, 2000, 3000...
-      }));
+      const itemsWithAmount = res.data.map((item) => {
+        let amount;
+
+        if (typeof item.amount === "string" && item.amount.includes("/")) {
+          const [a, b] = item.amount.split("/");
+          amount = Number(a) / Number(b);
+        } else {
+          amount = Number(item.amount);
+        }
+
+        return {
+          ...item,
+          amount: amount
+        };
+        });
 
       // ✅ Group & sum by parentKey
       const parentTotals = itemsWithAmount.reduce((acc, item) => {
