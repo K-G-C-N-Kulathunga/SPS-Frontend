@@ -270,7 +270,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 name="boundaryWall"
                 value="yes"
                 className="radio-input"
-                checked={formData.boundaryWall === "yes"}
+                checked={formData.boundaryWall === "Y"}
                 onChange={(e) => setFormData({ ...formData, boundaryWall: e.target.value })}
               />
               <label htmlFor="boundaryWall-yes" className="radio-la bel">Yes</label>
@@ -282,7 +282,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 name="boundaryWall"
                 value="no"
                 className="radio-input"
-                checked={formData.boundaryWall === "no"}
+                checked={formData.boundaryWall === "N"}
                 onChange={(e) => setFormData({ ...formData, boundaryWall: e.target.value })}
               />
               <label htmlFor="boundaryWall-no" className="radio-label">No</label>
