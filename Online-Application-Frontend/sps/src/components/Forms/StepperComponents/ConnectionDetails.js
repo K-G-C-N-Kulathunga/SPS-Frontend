@@ -193,16 +193,16 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             onChange={(e) => setFormData({ ...formData, usageElectricity: e.target.value })}
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">Residential</option>
-            <option value="HOTEL">Hotel</option>
-            <option value="SHOP">Shop</option>
-            <option value="OFFI">Office</option>
-            <option value="RELI">Religious</option>
-            <option value="SMILL">Saw Mill/Stone Quarry</option>
-            <option value="RMILL">Rice Mill/Chilli Mill</option>
-            <option value="WELD">Welding workshop</option>
-            <option value="PUMP">Pumping Station</option>
-            <option value="INDU">Industrial</option>
+            <option value="RSD">Residential</option>
+            <option value="HTL">Hotel</option>
+            <option value="SHP">Shop</option>
+            <option value="OFF">Office</option>
+            <option value="RLG">Religious</option>
+            <option value="SAW">Saw Mill/Stone Quarry</option>
+            <option value="MLL">Rice Mill/Chilli Mill</option>
+            <option value="WLD">Welding workshop</option>
+            <option value="PMP">Pumping Station</option>
+            <option value="IND">Industrial</option>
           </select>
         </div>
 
@@ -216,7 +216,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 name="requestingTime"
                 value="yes"
                 className="radio-group-tariff"
-                checked={formData.requestingTime === "yes"}
+                checked={formData.requestingTime === "Y"}
                 onChange={(e) => setFormData({ ...formData, requestingTime: e.target.value })}
               />
               <label htmlFor="requestingTime-yes" className="radio-label">Yes</label>
@@ -229,7 +229,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 name="requestingTime"
                 value="no"
                 className="radio-input"
-                checked={formData.requestingTime === "no"}
+                checked={formData.requestingTime === "N"}
                 onChange={(e) => setFormData({ ...formData, requestingTime: e.target.value })}
               />
               <label htmlFor="requestingTime-no" className="radio-label">No</label>
