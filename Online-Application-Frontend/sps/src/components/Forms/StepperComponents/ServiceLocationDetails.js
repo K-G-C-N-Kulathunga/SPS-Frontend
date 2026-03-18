@@ -617,7 +617,7 @@ const ServiceLocationDetails = ({
                   id="Occupy"
                   name="ownership"
                   value="Occupy"
-                  checked={formData?.ownership === "Occupy"}
+                  checked={formData?.ownership === "O"}
                   onChange={handleChange}
               />
               <label htmlFor="Occupy" className="radio-label">Owner</label>
@@ -626,7 +626,7 @@ const ServiceLocationDetails = ({
                   id="Rent"
                   name="ownership"
                   value="Rent"
-                  checked={formData?.ownership === "Rent"}
+                  checked={formData?.ownership === "R"}
                   onChange={handleChange}
               />
               <label htmlFor="Rent" className="radio-label">Tenant</label>
