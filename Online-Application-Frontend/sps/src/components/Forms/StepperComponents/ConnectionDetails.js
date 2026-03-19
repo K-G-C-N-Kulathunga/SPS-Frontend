@@ -108,7 +108,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    phase: parseInt(e.target.value, 10),
+                    phase: Number(e.target.value), // Ensure value is always a number
                     connectionType: "30", // reset connection type to 30A for 1ph
                   })
                 }
@@ -126,7 +126,7 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    phase: parseInt(e.target.value, 10),
+                    phase: Number(e.target.value), // Ensure value is always a number
                   })
                 }
               />
@@ -193,16 +193,16 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
             onChange={(e) => setFormData({ ...formData, usageElectricity: e.target.value })}
           >
             <option value="" disabled>Select Type</option>
-            <option value="RESI">Residential</option>
-            <option value="HOTEL">Hotel</option>
-            <option value="SHOP">Shop</option>
-            <option value="OFFI">Office</option>
-            <option value="RELI">Religious</option>
-            <option value="SMILL">Saw Mill/Stone Quarry</option>
-            <option value="RMILL">Rice Mill/Chilli Mill</option>
-            <option value="WELD">Welding workshop</option>
-            <option value="PUMP">Pumping Station</option>
-            <option value="INDU">Industrial</option>
+            <option value="RSD">Residential</option>
+            <option value="HTL">Hotel</option>
+            <option value="SHP">Shop</option>
+            <option value="OFF">Office</option>
+            <option value="RLG">Religious</option>
+            <option value="SAW">Saw Mill/Stone Quarry</option>
+            <option value="MLL">Rice Mill/Chilli Mill</option>
+            <option value="WLD">Welding workshop</option>
+            <option value="PMP">Pumping Station</option>
+            <option value="IND">Industrial</option>
           </select>
         </div>
 
@@ -214,9 +214,9 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 type="radio"
                 id="requestingTime-yes"
                 name="requestingTime"
-                value="yes"
+                value="Y" 
                 className="radio-group-tariff"
-                checked={formData.requestingTime === "yes"}
+                checked={formData.requestingTime === "Y"}
                 onChange={(e) => setFormData({ ...formData, requestingTime: e.target.value })}
               />
               <label htmlFor="requestingTime-yes" className="radio-label">Yes</label>
@@ -227,9 +227,9 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 type="radio"
                 id="requestingTime-no"
                 name="requestingTime"
-                value="no"
+                value="N" 
                 className="radio-input"
-                checked={formData.requestingTime === "no"}
+                checked={formData.requestingTime === "N"}
                 onChange={(e) => setFormData({ ...formData, requestingTime: e.target.value })}
               />
               <label htmlFor="requestingTime-no" className="radio-label">No</label>
@@ -268,21 +268,21 @@ const ConnectionDetails = ({ formData, setFormData, customerData, accountNumbers
                 type="radio"
                 id="boundaryWall-yes"
                 name="boundaryWall"
-                value="yes"
+                value="Y"
                 className="radio-input"
-                checked={formData.boundaryWall === "yes"}
+                checked={formData.boundaryWall === "Y"}
                 onChange={(e) => setFormData({ ...formData, boundaryWall: e.target.value })}
               />
-              <label htmlFor="boundaryWall-yes" className="radio-la bel">Yes</label>
+              <label htmlFor="boundaryWall-yes" className="radio-label">Yes</label>
             </div>
             <div className="radio-option">
               <input
                 type="radio"
                 id="boundaryWall-no"
                 name="boundaryWall"
-                value="no"
+                value="N"
                 className="radio-input"
-                checked={formData.boundaryWall === "no"}
+                checked={formData.boundaryWall === "N"}
                 onChange={(e) => setFormData({ ...formData, boundaryWall: e.target.value })}
               />
               <label htmlFor="boundaryWall-no" className="radio-label">No</label>

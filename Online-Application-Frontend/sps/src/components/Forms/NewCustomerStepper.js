@@ -463,12 +463,7 @@ const NewCustomerStepper = () => {
     }
 
     const payload = {
-      phase:
-        connectionDetails.phase === 3
-          ? true
-          : connectionDetails.phase === 1
-          ? false
-          : undefined,
+      phase: connectionDetails.phase,
       connectionType: connectionDetails.connectionType,
       usageElectricity: connectionDetails.usageElectricity,
       requestingTime: connectionDetails.requestingTime,
