@@ -374,7 +374,6 @@ const handleAddressChange = (e) => {
                 id="idNo"
                 name="idNo"
                 className="form-input"
-                placeholder="123456789V or 200012345678"
                 required
                 value={formData.idNo}
                 onChange={handleIdValidation}
@@ -406,7 +405,6 @@ const handleAddressChange = (e) => {
             id="fullName"
             name="fullName"
             className="form-input"
-            placeholder="A.B. Perera"
             onChange={handleNameChange}
             required
             value={formData.fullName}
@@ -429,7 +427,6 @@ const handleAddressChange = (e) => {
               id="firstName"
               name="firstName"
               className="form-input"
-              placeholder="John"
               required
               value={formData.firstName}
               onChange={handleNameChange}
@@ -451,7 +448,6 @@ const handleAddressChange = (e) => {
               id="lastName"
               name="lastName"
               className="form-input"
-              placeholder="Perera"
               required
               value={formData.lastName}
               onChange={handleNameChange}
@@ -475,7 +471,6 @@ const handleAddressChange = (e) => {
               id="streetAddress"
               name="streetAddress"
               className="form-input"
-              placeholder="No 24"
               value={formData.streetAddress}
               onChange={handleAddressChange}
               onBlur={(e) => validateAddressField("streetAddress", e.target.value)}
@@ -498,7 +493,6 @@ const handleAddressChange = (e) => {
               id="suburb"
               name="suburb"
               className="form-input"
-              placeholder="Main Street"
               value={formData.suburb}
               onChange={handleAddressChange}
               onBlur={(e) => validateAddressField("suburb", e.target.value)}
@@ -523,7 +517,6 @@ const handleAddressChange = (e) => {
               id="city"
               name="city"
               className="form-input"
-              placeholder="Colombo"
               value={formData.city}
               onChange={handleAddressChange}
               onBlur={(e) => validateAddressField("city", e.target.value)}
@@ -546,7 +539,6 @@ const handleAddressChange = (e) => {
               id="postalCode"
               name="postalCode"
               className="form-input"
-              placeholder="00100"
               value={formData.postalCode}
               onChange={handleAddressChange}
               onBlur={(e) => validateAddressField("postalCode", e.target.value)}
@@ -570,7 +562,6 @@ const handleAddressChange = (e) => {
               id="telephoneNo"
               name="telephoneNo"
               className="form-input"
-              placeholder="0xxxxxxxxx"
               pattern="\d{10}"
               maxLength={10}
               title="Phone number must be exactly 10 digits"
@@ -589,7 +580,6 @@ const handleAddressChange = (e) => {
               id="mobileNo"
               name="mobileNo"
               className="form-input"
-              placeholder="0xxxxxxxxx"
               pattern="\d{10}"
               maxLength={10}
               title="Mobile number must be exactly 10 digits"
@@ -615,7 +605,6 @@ const handleAddressChange = (e) => {
               id="email"
               name="email"
               className="form-input-email"
-              placeholder="example@email.com"
               value={formData.email}
               onChange={handleEmailChange}
             />
