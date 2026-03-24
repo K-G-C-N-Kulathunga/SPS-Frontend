@@ -128,6 +128,33 @@ useEffect(() => {
     noStruts: "No. Struts",
   };
 
+  // ---------- 🔥 Populate left column from API ----------
+useEffect(() => {
+  if (!formData.estimationData) return;
+
+  const d = formData.estimationData;
+
+  setFormDataLeft({
+    categoryCode:               d.sin               ?? "",
+    totalLineLength:            d.totalLength        ?? "",
+    conductorType:              d.bareconType        ?? "",
+    conductorLength:            d.bareconLength      ?? "",
+    serviceLength:              d.serviceLength      ?? "",
+    lengthInsidePremises:       d.insideLength       ?? "",
+    conversion1P3P:             d.conversionLength   ?? "",
+    conversion2P3P:             d.conversionLength2p ?? "",
+    secondCircuitLength:        d.secondCircuitLength ?? "",
+    secondCircuitConductorType: d.serviceWireType    ?? "",
+    wiringType:                 d.wiringType         ?? "",
+    loopService:                d.loopCable          ?? "",
+    cableType:                  d.cableType          ?? "",
+    spans:                      d.noOfSpans          ?? "",
+    noPoles:                    d.poleno             ?? "",
+    noStays:                    "",   // not in API
+    noStruts:                   "",   // not in API
+  });
+}, [formData.estimationData]);
+
   return (
     <div style={containerStyle}>
       <div style={gridStyle}>

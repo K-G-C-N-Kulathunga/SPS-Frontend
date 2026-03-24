@@ -80,12 +80,21 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
 
       setEstimatedTotalCost(total);
 
+      // ✅ Fetch estimation data (left column)
+    const deptId = selectedApplication.split("/")[0];
+    const estRes = await api.get("/spserest/estimation", {
+      params: { applicationNo: selectedApplication, deptId: deptId },
+    });
+    const estimationData = estRes.data[0] || {};
+
+
       // ✅ Send to parent if needed
       setFormData(prev => ({
         ...prev,
         costItems: itemsWithAmount,
         parentTotals,
-        estimatedTotalCost: total
+        estimatedTotalCost: total,
+        estimationData
       }));
 
       console.log("Parent Totals:", parentTotals);
