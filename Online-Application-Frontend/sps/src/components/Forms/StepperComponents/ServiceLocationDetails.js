@@ -417,6 +417,7 @@ const ServiceLocationDetails = ({
                   </option>
               ))}
             </select>
+            {console.log("Areas state:", areas)}
             {loadingAreas && <div>Loading areas...</div>}
           </div>
           <div className="form-group">

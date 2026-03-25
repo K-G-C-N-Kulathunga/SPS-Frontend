@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../../apiService";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
-const CustomerDetails = ({ formData, setFormData, handleChange }) => {
+const CustomerDetails = ({ formData, setFormData, handleChange, otpVerified }) => {
   const [customerExists, setCustomerExists] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -585,10 +585,7 @@ const handleAddressChange = (e) => {
               title="Mobile number must be exactly 10 digits"
               required
               value={formData.mobileNo}
-              disabled={
-                localStorage.getItem("passingTempId") !== null &&
-                localStorage.getItem("passingTempId") !== "null"
-              }
+              disabled={otpVerified} // Disable only if OTP is verified
               onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
               onChange={handleChange}
             />
