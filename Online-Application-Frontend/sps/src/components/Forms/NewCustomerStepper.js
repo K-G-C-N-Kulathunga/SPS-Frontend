@@ -797,7 +797,7 @@ const NewCustomerStepper = () => {
           return;
         }
 
-        await postCustomerDetails();
+         await postCustomerDetails();
 
         // ✅ Existing app: no OTP
         if (tempIdFromUrl) {
@@ -805,7 +805,7 @@ const NewCustomerStepper = () => {
           return;
         }
 
-        // ✅ NEW app: OTP only ONCE per session
+        //✅ NEW app: OTP only ONCE per session
         if (!otpVerified) {
           const tmp = await generateTempId();
           if (!tmp) {
