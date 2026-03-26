@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../../apiService";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
-const CustomerDetails = ({ formData, setFormData, handleChange }) => {
+const CustomerDetails = ({ formData, setFormData, handleChange, otpVerified }) => {
   const [customerExists, setCustomerExists] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -32,35 +32,48 @@ const CustomerDetails = ({ formData, setFormData, handleChange }) => {
   }, [formData.personalCorporate]);
 
   const handlefind = async () => {
-    try {
-      const response = await api.get(`/applicants/findById/${formData.idNo}`);
-      if (response.data) {
-        setCustomerExists(true);
-        setFormData((prev) => ({
-          ...prev,
-          idNo: prev.idNo || response.data.idNo, // Ensure ID is always retained
-          idType: prev.idType || response.data.idType,
-          personalCorporate:
-            response.data.personalCorporate || prev.personalCorporate,
-          fullName: response.data.fullName || prev.fullName,
-          firstName: response.data.firstName || prev.firstName,
-          lastName: response.data.lastName || prev.lastName,
-          streetAddress: response.data.streetAddress || prev.streetAddress,
-          suburb: response.data.suburb || prev.suburb,
-          city: response.data.city || prev.city,
-          postalCode: response.data.postalCode || prev.postalCode,
-          telephoneNo: response.data.telephoneNo || prev.telephoneNo,
-          mobileNo: response.data.mobileNo || prev.mobileNo,
-          email: response.data.email || prev.email,
-        }));
-      } else {
-        setCustomerExists(false);
-      }
-    } catch (error) {
-      console.error("error fetching data", error);
+  // 1. If customer exists (details are currently showing), clear them
+  if (customerExists) {
+    setCustomerExists(false);
+    setFormData((prev) => ({
+      ...prev,
+      // Reset all fields to empty strings, but keep the ID number
+      idType: "",
+      personalCorporate: "",
+      fullName: "",
+      firstName: "",
+      lastName: "",
+      streetAddress: "",
+      suburb: "",
+      city: "",
+      postalCode: "",
+      telephoneNo: "",
+      mobileNo: "",
+      email: "",
+    }));
+    return; // Stop here so we don't call the backend
+  }
+
+  // 2. If customer does NOT exist (details are empty), call the backend
+  try {
+    const response = await api.get(`/applicants/findById/${formData.idNo}`);
+    
+    if (response.data) {
+      setCustomerExists(true);
+      setFormData((prev) => ({
+        ...prev,
+        ...response.data, // This fills everything returned from the backend
+        idNo: prev.idNo || response.data.idNo,
+      }));
+    } else {
       setCustomerExists(false);
+      alert("Customer not found"); // Optional: let user know no data was found
     }
-  };
+  } catch (error) {
+    console.error("error fetching data", error);
+    setCustomerExists(false);
+  }
+};
 
   // ID validation (supports either 12 digits OR 9 digits followed by uppercase V)
   const handleIdValidation = (e) => {
@@ -585,10 +598,7 @@ const handleAddressChange = (e) => {
               title="Mobile number must be exactly 10 digits"
               required
               value={formData.mobileNo}
-              disabled={
-                localStorage.getItem("passingTempId") !== null &&
-                localStorage.getItem("passingTempId") !== "null"
-              }
+              disabled={otpVerified} // Disable only if OTP is verified
               onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
               onChange={handleChange}
             />

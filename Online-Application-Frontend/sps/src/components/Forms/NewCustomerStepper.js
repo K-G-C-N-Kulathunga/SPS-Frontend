@@ -66,7 +66,8 @@ const NewCustomerStepper = () => {
 
   // ✅ OTP should be required only once per session for NEW application
   const [otpVerified, setOtpVerified] = useState(() => {
-    return sessionStorage.getItem("otpVerified") === "true";
+    // Initialize OTP verification state
+    return false; // Default to not verified
   });
 
   // ✅ Agreement confirmation popup (on Submit)
@@ -621,6 +622,7 @@ const NewCustomerStepper = () => {
           setFormData={setCustomerDetails}
           customerExists={customerExists}
           fetchCustomerById={fetchCustomerById}
+          otpVerified={otpVerified} // Pass OTP verification state
         />
       ),
     },
@@ -795,7 +797,7 @@ const NewCustomerStepper = () => {
           return;
         }
 
-        await postCustomerDetails();
+         await postCustomerDetails();
 
         // ✅ Existing app: no OTP
         if (tempIdFromUrl) {
@@ -803,7 +805,7 @@ const NewCustomerStepper = () => {
           return;
         }
 
-        // ✅ NEW app: OTP only ONCE per session
+        //✅ NEW app: OTP only ONCE per session
         if (!otpVerified) {
           const tmp = await generateTempId();
           if (!tmp) {
