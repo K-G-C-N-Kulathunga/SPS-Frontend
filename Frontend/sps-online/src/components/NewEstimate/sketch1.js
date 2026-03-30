@@ -22,6 +22,8 @@ const Sketch1 = ({ formData }) => {
     noPoles: "",
     noStays: "",
     noStruts: "",
+    sinNo: "",
+    distanceToSp: "", // not in API
   });
 
   // ---------- Hardcoded base amounts (NO EST_TOTAL here) ----------
@@ -126,6 +128,8 @@ useEffect(() => {
     noPoles: "No. Poles",
     noStays: "No. Stays",
     noStruts: "No. Struts",
+    sinNo: "SIN Number",
+    distanceToSp: "Distance to Service Place (Km)",
   };
 
   // ---------- 🔥 Populate left column from API ----------
@@ -135,7 +139,7 @@ useEffect(() => {
   const d = formData.estimationData;
 
   setFormDataLeft({
-    categoryCode:               d.sin               ?? "",
+    categoryCode:                "SMC",
     totalLineLength:            d.totalLength        ?? "",
     conductorType:              d.bareconType        ?? "",
     conductorLength:            d.bareconLength      ?? "",
@@ -152,6 +156,9 @@ useEffect(() => {
     noPoles:                    d.poleno             ?? "",
     noStays:                    "",   // not in API
     noStruts:                   "",   // not in API
+    sinNo:                      d.sin               ?? "",
+    distanceToSp:               d.distanceToSp    ?? "",   // not in API
+
   });
 }, [formData.estimationData]);
 
@@ -170,6 +177,7 @@ useEffect(() => {
                 value={formDataLeft[key]}
                 onChange={handleLeftChange}
                 style={inputStyle}
+                readOnly
               />
             </div>
           ))}

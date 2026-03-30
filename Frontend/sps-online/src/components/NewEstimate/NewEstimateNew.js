@@ -153,7 +153,7 @@ const ApplicationConnectionDetails = ({ onFetchComplete, setFormData }) => {
           </select>
 
           <button style={buttonStyle} onClick={handleFetchClick}>
-            Fetch
+            Find
           </button>
         </div>
       </div>
