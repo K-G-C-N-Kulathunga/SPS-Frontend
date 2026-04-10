@@ -1,6 +1,6 @@
 /* success-container styling */
 /* body {
-  background-color: #cd1a1a;
+  background-color: #ffffff;
 } */
 .success-container {
   background-color: #fff; /* Light blue background */

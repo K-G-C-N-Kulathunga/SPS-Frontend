@@ -452,7 +452,7 @@ const ServiceLocationDetails = ({
                   className="form-input"
                   value={formData?.assessmentNo || ""}
                   onChange={handleChange}
-                  maxLength={6}
+                  maxLength={10}
                   inputMode="numeric"
               />
             </div>

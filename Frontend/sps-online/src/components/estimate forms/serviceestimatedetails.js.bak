@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Header from "components/Headers/Header.js";
 import { api } from "api";
+import { useLocation } from "react-router-dom";
 
 const ServiceEstimateDetails = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -39,6 +40,23 @@ const ServiceEstimateDetails = () => {
   const topRef = useRef(null);
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState("");
+  // Mode controlled by sidebar via query/state: 'ADD' | 'MODIFY' | 'VIEW'
+  const location = useLocation();
+  const stateMode = (location?.state?.serviceEstimateMode || "").toUpperCase();
+  const searchParams = new URLSearchParams(location?.search || "");
+  const queryMode = (searchParams.get("mode") || "").toUpperCase();
+  const pathname = (location?.pathname || "").toLowerCase();
+  const pathMode = pathname.includes("view")
+    ? "VIEW"
+    : pathname.includes("modify")
+    ? "MODIFY"
+    : pathname.includes("add")
+    ? "ADD"
+    : "";
+  const normalizedMode = (stateMode || queryMode || pathMode || "ADD").toUpperCase();
+  const mode = ["ADD", "MODIFY", "VIEW", "DELETE"].includes(normalizedMode) ? normalizedMode : "ADD";
+  const isView = mode === "VIEW"; // DELETE has its own minimal UI
+  const isDelete = mode === "DELETE";
   const [poleOptions, setPoleOptions] = useState([]); // State for pole data
   const [strutOptions, setStrutOptions] = useState([]); // State for strut data
   const [stayOptions, setStayOptions] = useState([]); // State for stay data
@@ -94,52 +112,55 @@ const ServiceEstimateDetails = () => {
     fetchStayData();
   }, []);
 
-  // Fetch all applications
+  // Fetch filtered applications for Add/Modify mode
   useEffect(() => {
     const fetchApplications = async () => {
       try {
+        if (mode === "VIEW") {
+          // In VIEW mode, user types application no; skip fetching lists
+          setApplications([]);
+          setSelectedApplication("");
+          console.log("VIEW mode: skipping application list fetch");
+          return;
+        }
         const deptId = "452.00";
         const applicationType = "NC";
         const status = "A";
+        // For ADD -> unused, for MODIFY/DELETE -> used
+        const endpoint = mode === "ADD"
+          ? "/applications/connection-details/application-nos/unused"
+          : "/applications/connection-details/application-nos/used";
 
-        const res = await api.get(`/applications/connection-details/all`, {
-          params: {
-            deptId: deptId,
-            applicationType: applicationType,
-            status: status,
-          },
+        const res = await api.get(endpoint, {
+          params: { deptId, applicationType, status },
         });
-
-        setApplications(res.data);
-        console.log("Applications fetched successfully:", res.data);
+        setApplications(res.data || []);
+        setSelectedApplication("");
+        console.log(`Applications (${mode}) fetched:`, res.data);
       } catch (err) {
         console.error("Error fetching applications:", err);
+        setApplications([]);
       }
     };
-
     fetchApplications();
-  }, []);
+  }, [mode]);
 
   const handleFetchClick = async () => {
     if (!selectedApplication) return;
-    const selected = applications.find(
-      (app) => app.applicationNo === selectedApplication
-    );
+    const selected = mode === "VIEW"
+      ? { applicationNo: selectedApplication, deptId: "452.00" }
+      : applications.find((app) => app.applicationNo === selectedApplication);
     if (!selected) return;
 
     try {
+      // Always load connection details
       const res = await api.get("/applications/connection-details/details", {
-        params: {
-          applicationNo: selected.applicationNo,
-          deptId: selected.deptId,
-        },
+        params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
       });
       const data = res.data;
-      setFormData((prev) => ({
-        ...prev,
+      let nextForm = {
         connectionDetails: {
-          applicationNo:
-            data.applicationNo || selected.applicationNo || selectedApplication,
+          applicationNo: data.applicationNo || selected.applicationNo || selectedApplication,
           deptId: selected.deptId || "",
           applicantName: data.applicantName || "",
           applicationDate: data.applicationDate || "",
@@ -152,7 +173,96 @@ const ServiceEstimateDetails = () => {
           connectionType: data.connectionType || "",
           tariff: data.tariff || "",
         },
-      }));
+      };
+
+      // In MODIFY or VIEW mode, also load previously saved estimation data
+      if (mode === "MODIFY" || mode === "VIEW") {
+        try {
+          const estRes = await api.get("/applications/connection-details/service-estimate/sps-arest", {
+            params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
+          });
+          const est = estRes.data || {};
+          nextForm = {
+            ...nextForm,
+            sketch1: {
+              serviceLength: "", // not mapped back
+              singleCircuitLength: "",
+              conductorType: "ABC1",
+              secondCircuitLength: String(est.secondCircuitLength ?? ""),
+              secondCircuitConductorType: "ABC1",
+              totalLineLength: est.totalLength ?? "",
+              wiringType: est.wiringType ?? "",
+              isLoopService: (est.loopCable === "Y" ? "Y" : est.loopCable === "N" ? "N" : "N"),
+              newLengthWithinPremises: "",
+              conversion1P3P: String(est.conversionLength ?? ""),
+              conversion2P3P: String(est.conversionLength2p ?? ""),
+              cableType: est.cableType ?? "",
+            },
+            sketch2: {
+              distanceToServicePoint: String(est.distanceToSp ?? ""),
+              sinNumber: est.sin ?? "",
+              isSyaNeeded: (est.isSyaNeeded === "Y" ? "Y" : est.isSyaNeeded === "N" ? "N" : "Y"),
+              businessType: est.businessType ?? "",
+              numberOfRanges: String(est.noOfSpans ?? ""),
+              isServiceConversion: est.isServiceConversion ?? "",
+            },
+            sketch3: {
+              poleNumber: est.poleno ?? "",
+              distanceFromSS: String(est.distanceFromSs ?? ""),
+              substation: est.substation ?? "",
+              transformerCapacity: est.transformerCapacity ?? "",
+              transformerLoad: est.transformerLoad ?? "",
+              transformerPeakLoad: est.transformerPeakLoad ?? "",
+              feederControlType: est.feederControlType ?? "",
+              phase: est.phase ?? "",
+            },
+          };
+
+          // Also load saved Sketch4 lists (Poles/Struts/Stays)
+          try {
+            const [polesRes, strutsRes, staysRes] = await Promise.all([
+              api.get("/applications/connection-details/service-estimate/sketch4/poles", {
+                params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
+              }),
+              api.get("/applications/connection-details/service-estimate/sketch4/struts", {
+                params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
+              }),
+              api.get("/applications/connection-details/service-estimate/sketch4/stays", {
+                params: { applicationNo: selected.applicationNo, deptId: selected.deptId },
+              }),
+            ]);
+
+            nextForm = {
+              ...nextForm,
+              sketch4: {
+                poles: Array.isArray(polesRes.data) ? polesRes.data.map(p => ({
+                  Selectpole: p.selectPole || "",
+                  poleType: p.poleType || "",
+                  connFrom: p.connFrom || "",
+                  connTo: p.connTo || "",
+                  pointerType: p.pointerType || "",
+                  qty: Number(p.qty) || 0,
+                })) : [],
+                struts: Array.isArray(strutsRes.data) ? strutsRes.data.map(s => ({
+                  type: s.type || "",
+                  qty: Number(s.qty) || 0,
+                })) : [],
+                stays: Array.isArray(staysRes.data) ? staysRes.data.map(s => ({
+                  type: s.type || "",
+                  stayType: s.stayType || "",
+                  qty: Number(s.qty) || 0,
+                })) : [],
+              },
+            };
+          } catch (sketch4Err) {
+            console.warn("No saved Sketch4 lists found:", sketch4Err?.response?.data || sketch4Err.message);
+          }
+        } catch (e) {
+          console.warn("No existing estimate to prefill:", e?.response?.data || e.message);
+        }
+      }
+
+      setFormData((prev) => ({ ...prev, ...nextForm }));
     } catch (err) {
       console.error("Error fetching application details:", err);
     }
@@ -209,7 +319,7 @@ const ServiceEstimateDetails = () => {
         },
       }));
     }
-  }, []);
+  }, [formData.sketch1, formData.sketch2, formData.sketch3]);
 
   // Input change handlers for all sections
   const handleConnectionChange = (e) => {
@@ -324,19 +434,6 @@ const ServiceEstimateDetails = () => {
   };
 
   // Sketch 4 handlers
-  const handlePoleChange = (index, field, value) => {
-    setFormData((prev) => {
-      const updatedPoles = [...prev.sketch4.poles];
-      updatedPoles[index][field] = value;
-      return {
-        ...prev,
-        sketch4: {
-          ...prev.sketch4,
-          poles: updatedPoles,
-        },
-      };
-    });
-  };
 
   const handleRemovePole = (index) => {
     setFormData((prev) => {
@@ -373,19 +470,6 @@ const ServiceEstimateDetails = () => {
     }));
   };
 
-  const handleStrutChange = (index, field, value) => {
-    setFormData((prev) => {
-      const updatedStruts = [...prev.sketch4.struts];
-      updatedStruts[index][field] = value;
-      return {
-        ...prev,
-        sketch4: {
-          ...prev.sketch4,
-          struts: updatedStruts,
-        },
-      };
-    });
-  };
 
   const handleRemoveStrut = (index) => {
     setFormData((prev) => {
@@ -421,6 +505,7 @@ const ServiceEstimateDetails = () => {
     alignItems: "center",
     marginBottom: "8px",
   };
+
   const labelStyle = {
     width: "160px",
     fontWeight: 500,
@@ -461,6 +546,102 @@ const ServiceEstimateDetails = () => {
     cursor: "pointer",
     marginLeft: "10px",
   };
+
+  // Delete handler (placed before DELETE UI to satisfy lint)
+  const handleDelete = async () => {
+    try {
+      const resolvedApplicationNo = (formData.connectionDetails.applicationNo || selectedApplication || "").toString().trim();
+      const resolvedDeptId = (formData.connectionDetails.deptId || (applications.find(a => a.applicationNo === resolvedApplicationNo)?.deptId) || "452.00").toString().trim();
+
+      if (!resolvedApplicationNo) {
+        alert("Please select or enter an application number.");
+        return;
+      }
+
+      const confirmed = window.confirm(`Delete service estimate for ${resolvedApplicationNo}? This will not delete the application.`);
+      if (!confirmed) return;
+
+      const resp = await api.delete(`/applications/connection-details/service-estimate`, {
+        params: { applicationNo: resolvedApplicationNo, deptId: resolvedDeptId, confirm: true }
+      });
+
+      if (resp.status === 200) {
+        alert("Service estimate deleted. The application will appear in Add mode.");
+        setApplications((prev) => prev.filter((a) => a.applicationNo !== resolvedApplicationNo));
+        setSelectedApplication("");
+        setFormData({
+          connectionDetails: {},
+          sketch1: {},
+          sketch2: {},
+          sketch3: {},
+          sketch4: { poles: [], struts: [], stays: [] }
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting service estimate:", error);
+      alert(`Delete failed: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+
+  // Scroll to top when tab changes (guarded for DELETE mode)
+  const scrollToTop = () => {
+    if (topRef.current)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (isDelete) return;
+    scrollToTop();
+  }, [activeTab, isDelete]);
+
+  // Minimal DELETE mode UI: only application selector and Delete button
+  if (isDelete) {
+    return (
+      <div className="app-container">
+        <Header />
+        <div className="main-content">
+          <div className="form-container">
+            <div className="flex flex-col min-h-screen bg-gray-100 p-6">
+              <div className="w-full max-w-3xl mx-auto px-4">
+                <div className="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded p-4">
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#111827", marginBottom: "12px" }}>
+                    Delete Service Estimate
+                  </h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <label style={labelStyle}>Application No:</label>
+                    <select
+                      value={selectedApplication}
+                      onChange={(e) => setSelectedApplication(e.target.value)}
+                      style={{ ...inputStyle, background: "#fff", cursor: "pointer" }}
+                    >
+                      <option value="">Select Application</option>
+                      {applications.map((app) => (
+                        <option key={app.applicationNo} value={app.applicationNo}>
+                          {app.applicationNo}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleDelete}
+                      disabled={!selectedApplication}
+                      style={{ ...buttonStyle, background: selectedApplication ? "#DC2626" : "#9CA3AF" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <p style={{ marginTop: "12px", fontSize: "12px", color: "#6b7280" }}>
+                    Note: This removes only the service estimate data. The application remains.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Modal styles
   const modalOverlayStyle = {
@@ -540,26 +721,40 @@ const ServiceEstimateDetails = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "1fr",
               gap: "15px",
               marginBottom: "15px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               <label style={labelStyle}>Application No:</label>
-              <select
-                value={selectedApplication}
-                onChange={(e) => setSelectedApplication(e.target.value)}
-                style={{ ...inputStyle, background: "#fff", cursor: "pointer" }}
+              {isView ? (
+                <input
+                  type="text"
+                  value={selectedApplication}
+                  onChange={(e) => setSelectedApplication(e.target.value)}
+                  style={inputStyle}
+                  placeholder="Enter Application No"
+                />
+              ) : (
+                <select
+                  value={selectedApplication}
+                  onChange={(e) => setSelectedApplication(e.target.value)}
+                  style={{ ...inputStyle, background: "#fff", cursor: "pointer" }}
+                >
+                  <option value="">Select Application</option>
+                  {applications.map((app) => (
+                    <option key={app.applicationNo} value={app.applicationNo}>
+                      {app.applicationNo}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                style={buttonStyle}
+                onClick={handleFetchClick}
+                disabled={!selectedApplication}
               >
-                <option value="">Select Application</option>
-                {applications.map((app) => (
-                  <option key={app.applicationNo} value={app.applicationNo}>
-                    {app.applicationNo}
-                  </option>
-                ))}
-              </select>
-              <button style={buttonStyle} onClick={handleFetchClick}>
                 Find
               </button>
             </div>
@@ -585,6 +780,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.connectionDetails[field.name] || ""}
                     onChange={handleConnectionChange}
                     style={inputStyle}
+                    disabled={isView}
                   />
                 </div>
               ))}
@@ -605,6 +801,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.connectionDetails[field.name] || ""}
                     onChange={handleConnectionChange}
                     style={inputStyle}
+                    disabled={isView}
                   />
                 </div>
               ))}
@@ -638,6 +835,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch1[key] || ""}
                     onChange={handleSketch1Change}
                     style={inputStyle}
+                    disabled={isView}
                   >
                     <option value="">Select Conductor Type</option>
                     <option value="ABC1">ABC 3x95+70mm²</option>
@@ -650,6 +848,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch1[key] || ""}
                     onChange={handleSketch1Change}
                     style={inputStyle}
+                    disabled={isView}
                   >
                     <option value="">Select Wiring Type</option>
                     <option value="OH">Over Head</option>
@@ -665,6 +864,7 @@ const ServiceEstimateDetails = () => {
                         checked={formData.sketch1[key] === "Y"}
                         onChange={handleSketch1Change}
                         style={{ marginRight: "4px" }}
+                        disabled={isView}
                       />
                       Yes
                     </label>
@@ -676,6 +876,7 @@ const ServiceEstimateDetails = () => {
                         checked={formData.sketch1[key] === "N"}
                         onChange={handleSketch1Change}
                         style={{ marginRight: "4px" }}
+                        disabled={isView}
                       />
                       No
                     </label>
@@ -687,6 +888,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch1[key] || ""}
                     onChange={handleSketch1Change}
                     style={inputStyle}
+                    disabled={isView}
                   />
                 )}
               </div>
@@ -723,6 +925,7 @@ const ServiceEstimateDetails = () => {
                         checked={formData.sketch2[key] === "Y"}
                         onChange={handleSketch2Change}
                         style={{ marginRight: "4px" }}
+                        disabled={isView}
                       />
                       Yes
                     </label>
@@ -734,6 +937,7 @@ const ServiceEstimateDetails = () => {
                         checked={formData.sketch2[key] === "N"}
                         onChange={handleSketch2Change}
                         style={{ marginRight: "4px" }}
+                        disabled={isView}
                       />
                       No
                     </label>
@@ -744,6 +948,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch2[key] || ""}
                     onChange={handleSketch2Change}
                     style={inputStyle}
+                    disabled={isView}
                   >
                     <option value="">Select Applicable Rate</option>
                     <option value="0P_00A">As Customer</option>
@@ -760,6 +965,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch2[key] || ""}
                     onChange={handleSketch2Change}
                     style={inputStyle}
+                    disabled={isView}
                   />
                 )}
               </div>
@@ -792,6 +998,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch3[key] || ""}
                     onChange={handleSketch3Change}
                     style={inputStyle}
+                    disabled={isView}
                   >
                     <option value="">Select Phase</option>
                     <option value="Single">Single</option>
@@ -804,6 +1011,7 @@ const ServiceEstimateDetails = () => {
                     value={formData.sketch3[key] || ""}
                     onChange={handleSketch3Change}
                     style={inputStyle}
+                    disabled={isView}
                   />
                 )}
               </div>
@@ -846,14 +1054,16 @@ const ServiceEstimateDetails = () => {
               Poles
             </h4>
 
-            <div style={{ marginBottom: "10px" }}>
-              <button
-                onClick={openPoleModal}
-                style={{ ...buttonStyle, background: "#10B981" }}
-              >
-                Add to Pole List
-              </button>
-            </div>
+            {!isView && (
+              <div style={{ marginBottom: "10px" }}>
+                <button
+                  onClick={openPoleModal}
+                  style={{ ...buttonStyle, background: "#10B981" }}
+                >
+                  Add to Pole List
+                </button>
+              </div>
+            )}
 
             {/* Poles Table */}
             {formData.sketch4.poles.length > 0 && (
@@ -921,6 +1131,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Qty
                       </th>
+                      {!isView && (
                       <th
                         style={{
                           border: "1px solid #d1d5db",
@@ -930,6 +1141,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Action
                       </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -983,6 +1195,7 @@ const ServiceEstimateDetails = () => {
                         >
                           {pole.qty}
                         </td>
+                        {!isView && (
                         <td
                           style={{
                             border: "1px solid #d1d5db",
@@ -1001,6 +1214,7 @@ const ServiceEstimateDetails = () => {
                             Remove
                           </button>
                         </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -1049,6 +1263,7 @@ const ServiceEstimateDetails = () => {
                     }))
                   }
                   style={inputStyle}
+                  disabled={isView}
                 >
                   <option value="">Select Strut</option>
                   {strutOptions.map((strut) => (
@@ -1072,21 +1287,24 @@ const ServiceEstimateDetails = () => {
                     }))
                   }
                   style={inputStyle}
+                  disabled={isView}
                   min="1"
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: "10px" }}>
-              <button
-                onClick={() =>
-                  handleAddStrut(formData.strutInput, formData.strutQty)
-                }
-                style={{ ...buttonStyle, background: "#10B981" }}
-              >
-                Add to Strut List
-              </button>
-            </div>
+            {!isView && (
+              <div style={{ marginBottom: "10px" }}>
+                <button
+                  onClick={() =>
+                    handleAddStrut(formData.strutInput, formData.strutQty)
+                  }
+                  style={{ ...buttonStyle, background: "#10B981" }}
+                >
+                  Add to Strut List
+                </button>
+              </div>
+            )}
 
             {/* Struts Table */}
             {formData.sketch4.struts.length > 0 && (
@@ -1118,6 +1336,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Qty
                       </th>
+                      {!isView && (
                       <th
                         style={{
                           border: "1px solid #d1d5db",
@@ -1127,6 +1346,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Action
                       </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -1148,6 +1368,7 @@ const ServiceEstimateDetails = () => {
                         >
                           {strut.qty}
                         </td>
+                        {!isView && (
                         <td
                           style={{
                             border: "1px solid #d1d5db",
@@ -1166,6 +1387,7 @@ const ServiceEstimateDetails = () => {
                             Remove
                           </button>
                         </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -1193,14 +1415,16 @@ const ServiceEstimateDetails = () => {
               Stays
             </h4>
 
-            <div style={{ marginBottom: "10px" }}>
-              <button
-                onClick={openStayModal}
-                style={{ ...buttonStyle, background: "#10B981" }}
-              >
-                Add to Stay List
-              </button>
-            </div>
+            {!isView && (
+              <div style={{ marginBottom: "10px" }}>
+                <button
+                  onClick={openStayModal}
+                  style={{ ...buttonStyle, background: "#10B981" }}
+                >
+                  Add to Stay List
+                </button>
+              </div>
+            )}
 
             {/* Stays Table */}
             {formData.sketch4.stays.length > 0 && (
@@ -1241,6 +1465,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Qty
                       </th>
+                      {!isView && (
                       <th
                         style={{
                           border: "1px solid #d1d5db",
@@ -1250,6 +1475,7 @@ const ServiceEstimateDetails = () => {
                       >
                         Action
                       </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -1279,6 +1505,7 @@ const ServiceEstimateDetails = () => {
                         >
                           {stay.qty}
                         </td>
+                        {!isView && (
                         <td
                           style={{
                             border: "1px solid #d1d5db",
@@ -1297,6 +1524,7 @@ const ServiceEstimateDetails = () => {
                             Remove
                           </button>
                         </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -1306,7 +1534,7 @@ const ServiceEstimateDetails = () => {
           </div>
 
           {/* Pole Modal */}
-          {isModalOpen && (
+          {isModalOpen && !isView && (
             <div style={modalOverlayStyle}>
               <div style={modalContentStyle}>
                 <h3
@@ -1446,7 +1674,7 @@ const ServiceEstimateDetails = () => {
           )}
 
           {/* Stay Modal */}
-          {isStayModalOpen && (
+          {isStayModalOpen && !isView && (
             <div style={modalOverlayStyle}>
               <div style={modalContentStyle}>
                 <h3
@@ -1563,6 +1791,60 @@ const ServiceEstimateDetails = () => {
     if (activeTab > 0) setActiveTab(activeTab - 1);
     scrollToTop();
   };
+  // Professional print using Jasper PDF streamed from backend, no new tab
+  const handlePrint = async () => {
+    try {
+      const applicationNo = (formData.connectionDetails.applicationNo || selectedApplication || "").toString().trim();
+      const deptId = (formData.connectionDetails.deptId || (applications.find(a => a.applicationNo === applicationNo)?.deptId) || "452.00").toString().trim();
+      if (!applicationNo || !deptId) {
+        alert("Please select an application number before printing.");
+        return;
+      }
+
+      const resp = await api.get("/applications/connection-details/service-estimate/print", {
+        params: { applicationNo, deptId },
+        responseType: "blob",
+      });
+
+      const pdfBlob = new Blob([resp.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+
+      const cleanup = () => {
+        try { document.body.removeChild(iframe); } catch (e) {}
+        URL.revokeObjectURL(url);
+      };
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } finally {
+          setTimeout(cleanup, 1500);
+        }
+      };
+
+      // Fallback: if onload doesn't fire (rare), trigger print after a delay
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {}
+      }, 2000);
+    } catch (err) {
+      console.error("Print failed:", err);
+      alert(`Print failed: ${err.response?.data?.message || err.message}`);
+    }
+  };
   const handleSave = async () => {
     try {
       console.log("Saving form data:", formData);
@@ -1593,11 +1875,15 @@ const ServiceEstimateDetails = () => {
         })),
       };
 
+      // Resolve identifiers even if user forgot to click Find
+      const resolvedApplicationNo = (formData.connectionDetails.applicationNo || selectedApplication || "").toString().trim();
+      const resolvedDeptId = (formData.connectionDetails.deptId || (applications.find(a => a.applicationNo === resolvedApplicationNo)?.deptId) || "452.00").toString().trim();
+
       // Prepare the data structure for backend
       const requestData = {
         connectionDetails: {
-          applicationNo: formData.connectionDetails.applicationNo || "",
-          deptId: formData.connectionDetails.deptId || "",
+          applicationNo: resolvedApplicationNo,
+          deptId: resolvedDeptId,
           phase: formData.connectionDetails.phase || "",
           businessType:
             formData.connectionDetails.businessType ||
@@ -1680,12 +1966,17 @@ const ServiceEstimateDetails = () => {
       // Send data to backend using configured API client
       const response = await api.post(
         "/applications/connection-details/service-estimate/save-from-frontend",
-        requestData
+        { ...requestData, mode }
       );
 
       if (response.status === 200) {
         alert("Service estimate details saved successfully to both tables!");
         console.log("Backend response:", response.data);
+        // After Add, remove the application from Add list
+        if (mode === "ADD") {
+          setApplications((prev) => prev.filter((a) => a.applicationNo !== resolvedApplicationNo));
+          setSelectedApplication("");
+        }
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -1697,13 +1988,8 @@ const ServiceEstimateDetails = () => {
       );
     }
   };
-  const scrollToTop = () => {
-    if (topRef.current)
-      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    else window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
-  useEffect(() => scrollToTop(), [activeTab]);
+  
 
   return (
     <div className="app-container">
@@ -1762,6 +2048,20 @@ const ServiceEstimateDetails = () => {
                         className="bg-lightBlue-500 text-white font-bold uppercase text-xs px-6 py-3 rounded shadow hover:shadow-md transition duration-150"
                       >
                         Next
+                      </button>
+                    ) : isView ? (
+                      <button
+                        onClick={handlePrint}
+                        className="bg-blue-600 text-white font-bold uppercase text-xs px-6 py-3 rounded shadow hover:shadow-md transition duration-150"
+                      >
+                        Print
+                      </button>
+                    ) : mode === "DELETE" ? (
+                      <button
+                        onClick={handleDelete}
+                        className="bg-red-600 text-white font-bold uppercase text-xs px-6 py-3 rounded shadow hover:shadow-md transition duration-150"
+                      >
+                        Delete
                       </button>
                     ) : (
                       <button

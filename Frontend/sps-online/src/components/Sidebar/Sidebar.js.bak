@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import { FaSignOutAlt, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useUser } from "../../context/UserContext";
-import edl from "../../assets/img/edl-logo.svg";
+import ceb from "../../assets/img/ceb.png";
 import { resolveAdminRoute } from "routes/adminRoutes";
 
 export default function Sidebar() {
@@ -12,16 +12,47 @@ export default function Sidebar() {
 
         // Resolve the target route using the page column supplied by the backend task metadata.
         const getTaskPath = (menu, task) => {
-            const backendPage = (task.page || '').trim();
+            const menuName = (menu.displayName || '').toLowerCase();
+            const taskName = (task.activityName || '').toLowerCase();
 
-            if (backendPage) {
-                const resolved = resolveAdminRoute(backendPage);
-                if (resolved) {
-                    return resolved;
-                }
-            }
+            // If user clicks "Add" under "Service Estimate", go to Service Estimate Details page
+            // if (menuName.includes('service estimate') && taskName === 'add') {
+            //     return '/admin/service-estimation/details';
+            // }
 
-            return resolveAdminRoute(`/admin/${menu.menuCode}/${task.activityCode}`) || `/admin/${menu.menuCode}/${task.activityCode}`;
+            //  if (menuName.includes('service estimate') && taskName === 'modify') {
+            //     return '/admin/service-estimation/details';
+            // }
+
+            // If user clicks "Add" under Calendar (or Calendar-like menus), go to Scheduler page
+            // Accept common spellings/variants and the specific menu code 'NCD'
+            // if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'add') {
+            //     return '/admin/scheduler';
+            // }
+
+
+            // if ((menuName.includes('calendar') || menuName.includes('calend') || menu.menuCode === 'NCD') && taskName === 'modify') {
+            //     return '/admin/scheduler';
+            // }
+
+            // if (menuName.includes('application') && taskName === 'add') {
+            //     return '/admin/form';
+            // }
+
+            // if (menuName.includes('application') && taskName === 'modify') {
+            //     return '/admin/form';
+            // }
+
+            // if (menuName.includes('new estimate') && taskName === 'add') {
+            //     return '/admin/NewEstimate';
+            // }
+            //  if (menuName.includes('new estimate') && taskName === 'modify') {
+            //     return '/admin/NewEstimate';
+            // }
+
+
+            // Default behavior: keep current pattern
+            return `${task.page}`;
         };
 
     // Get userId from localStorage/sessionStorage
@@ -53,7 +84,7 @@ export default function Sidebar() {
               style={{ backgroundColor: "white" }}
           >
               <div className="md:flex-col md:items-stretch md:min-h-full md:flex-nowrap px-0 flex flex-wrap items-center justify-between w-full mx-auto">
-                  {/* Brand: SPS + EDL Logo */}
+                  {/* Brand: SPS + CEB Logo */}
                   <Link
                       className="md:block md:pb-2 inline-block p-4 px-0 transition duration-300 ease-in-out transform hover:scale-105"
                       to="/"
@@ -63,9 +94,9 @@ export default function Sidebar() {
             style={{ textAlign: "center" }}
         >
           <img
-              src={edl}
-              alt="EDL Logo"
-               style={{ marginBottom: "8px", height: "75px" }}
+              src={ceb}
+              alt="CEB Logo"
+              style={{ marginBottom: "8px", height: "50px", width: "50px" }}
           />
           <h3
               style={{
@@ -91,7 +122,7 @@ export default function Sidebar() {
                                           className="flex items-center justify-between py-2 px-4 rounded hover:bg-blueGray-700 transition cursor-pointer"
                                           onClick={() => handleMenuClick(menu.menuCode)}
                                       >
-                                          <span>{menu.displayName}</span>
+                                          <span>{menu.description}</span>
                                           {expandedMenu === menu.menuCode ? <FaChevronUp /> : <FaChevronDown />}
                                       </div>
                                       {/* Show tasks if this menu is expanded */}
@@ -100,9 +131,34 @@ export default function Sidebar() {
                                               {menuTasks[menu.menuCode] && menuTasks[menu.menuCode].length > 0 ? (
                                                   menuTasks[menu.menuCode].map((task) => (
                                                       <li key={task.activityCode} className="py-1 px-2 hover:bg-blueGray-100 rounded">
-                                                          <Link to={getTaskPath(menu, task)}>
-                                                              {task.activityName}
-                                                          </Link>
+                                                          {(() => {
+                                                              const rawPath = getTaskPath(menu, task) || "";
+                                                              const lowerMenu = (menu.displayName || "").toLowerCase();
+                                                              const lowerTask = (task.activityName || "").toLowerCase();
+
+                                                              // Default destination
+                                                              let to = rawPath;
+
+                                                              // For Service Estimate menu, force single page route and pass mode via query
+                                                              const isServiceEstimate = lowerMenu.includes("service") && lowerMenu.includes("estimate");
+                                                              if (isServiceEstimate) {
+                                                                  if (lowerTask.includes("add")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=ADD" };
+                                                                  } else if (lowerTask.includes("modify") || lowerTask.includes("edit") || lowerTask.includes("update")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=MODIFY" };
+                                                                  } else if (lowerTask.includes("delete") || lowerTask.includes("remove")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=DELETE" };
+                                                                  } else if (lowerTask.includes("view") || lowerTask.includes("read") || lowerTask.includes("print")) {
+                                                                      to = { pathname: "/admin/service-estimation/details", search: "?mode=VIEW" };
+                                                                  }
+                                                              }
+
+                                                              return (
+                                                                  <Link to={to}>
+                                                                      {task.activityName}
+                                                                  </Link>
+                                                              );
+                                                          })()}
                                                       </li>
                                                   ))
                                               ) : (
